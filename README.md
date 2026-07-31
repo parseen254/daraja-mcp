@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/daraja-mcp?color=cb3837&logo=npm)](https://www.npmjs.com/package/daraja-mcp)
 [![downloads](https://img.shields.io/npm/dm/daraja-mcp?color=cb3837)](https://www.npmjs.com/package/daraja-mcp)
 [![coverage](https://parseen254.github.io/daraja-mcp/coverage.svg)](#development)
-[![tests](https://img.shields.io/badge/tests-507%20passing-4c1)](#development)
+[![tests](https://img.shields.io/badge/tests-538%20passing-4c1)](#development)
 [![node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 

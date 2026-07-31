@@ -67,16 +67,33 @@ function isStructureBreaking(cp: number): boolean {
   return false;
 }
 
-/** Invisible characters, used to hide or split text. Removed outright. */
+/**
+ * Invisible characters, used to hide or split text. Removed outright.
+ *
+ * The tag block at the end is the one that matters most. Those code points
+ * encode ordinary ASCII, render as nothing in every client, and survive into
+ * the token stream a model reads. A reference field can therefore carry a
+ * paragraph of instructions that a human reviewing the same transcript cannot
+ * see at all.
+ */
 function isInvisible(cp: number): boolean {
-  // Bidirectional embedding and override controls can visually reorder text.
-  if (cp >= 0x202a && cp <= 0x202e) return true;
-  // Bidirectional isolates.
-  if (cp >= 0x2066 && cp <= 0x2069) return true;
+  // Arabic letter mark, left-to-right mark, right-to-left mark. These reorder
+  // text with no visible glyph of their own.
+  if (cp === 0x061c || cp === 0x200e || cp === 0x200f) return true;
   // Zero-width space, non-joiner, joiner.
   if (cp >= 0x200b && cp <= 0x200d) return true;
+  // Bidirectional embedding and override controls.
+  if (cp >= 0x202a && cp <= 0x202e) return true;
+  // Word joiner, another zero-width splitter.
+  if (cp === 0x2060) return true;
+  // Bidirectional isolates.
+  if (cp >= 0x2066 && cp <= 0x2069) return true;
+  // Interlinear annotation marks, which render as nothing.
+  if (cp >= 0xfff9 && cp <= 0xfffb) return true;
   // Byte order mark used mid-string.
   if (cp === 0xfeff) return true;
+  // Unicode tag block: invisible characters that spell out readable ASCII.
+  if (cp >= 0xe0000 && cp <= 0xe007f) return true;
   return false;
 }
 

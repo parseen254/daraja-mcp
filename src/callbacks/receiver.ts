@@ -198,7 +198,19 @@ export class CallbackReceiver {
     expect?: WaitExpectation,
   ): Promise<CallbackRecord | null> {
     const existing = this.store.findByCorrelationId(correlationId);
-    if (existing) return Promise.resolve(existing);
+    if (existing) {
+      // A stored callback gets the same scrutiny as a live one. Returning it
+      // unchecked would bypass the amount binding precisely when the callback
+      // arrives before the caller starts waiting, which is common.
+      if (matchesExpectation(existing.payload, expect)) {
+        return Promise.resolve(existing);
+      }
+
+      this.stats.mismatched += 1;
+      this.onLog(
+        `Stored callback ${correlationId} contradicts the waiting request; not settling it`,
+      );
+    }
 
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
@@ -284,8 +296,12 @@ export class CallbackReceiver {
         'Content-Length': Buffer.byteLength(payload),
         Connection: 'close',
       });
-      res.end(payload);
-      req.destroy();
+      // Destroy only once the response has flushed. Tearing the socket down
+      // immediately can beat the queued bytes out, leaving the client with a
+      // connection reset instead of the 413 that explains what happened.
+      res.end(payload, () => {
+        req.destroy();
+      });
       return;
     }
 

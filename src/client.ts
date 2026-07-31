@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 import type { DarajaConfig } from './config.js';
-import { DarajaError, normaliseError } from './errors.js';
+import { DarajaError, hasErrorEnvelope, normaliseError, responseCodeOf } from './errors.js';
 
 /**
  * HTTP client for Daraja.
@@ -87,13 +87,20 @@ export class DarajaClient {
       return this.tokenCache.token;
     }
 
-    // Join an existing request rather than starting a competing one.
-    if (!forceRefresh && this.tokenInFlight) {
+    // Join whatever request is already running. A forced refresh skips the
+    // cache, not an active refresh: when several concurrent calls each get a
+    // 401 they all need a new token, and starting one request per caller
+    // recreates the burst this sharing exists to prevent.
+    if (this.tokenInFlight) {
       return this.tokenInFlight;
     }
 
     const request = this.fetchToken().finally(() => {
-      this.tokenInFlight = null;
+      // Only clear our own request. An older one settling later must not wipe
+      // out a newer refresh that has since taken its place.
+      if (this.tokenInFlight === request) {
+        this.tokenInFlight = null;
+      }
     });
     this.tokenInFlight = request;
     return request;
@@ -191,17 +198,18 @@ export class DarajaClient {
       if (res.ok) {
         const body = parsed as Record<string, unknown> | null;
 
-        // Daraja returns HTTP 200 with a non-zero ResponseCode for some
-        // failures, so a 200 alone is not success.
-        const rc = body?.ResponseCode;
+        // Daraja returns HTTP 200 with a non-zero response code for some
+        // failures, so a 200 alone is not success. The code appears under two
+        // spellings depending on the product.
+        const rc = responseCodeOf(parsed);
         if (rc !== undefined && !isSuccessResponseCode(rc)) {
           throw normaliseError(res.status, parsed);
         }
 
-        // It also returns 200 with an errorCode envelope, and sometimes an
-        // HTML gateway page that parseBody wraps as { raw }. Returning either
-        // as success tells the caller a payment was accepted when it was not.
-        if (body?.errorCode !== undefined || body?.errorMessage !== undefined) {
+        // It also returns 200 with an error envelope, and sometimes an HTML
+        // gateway page that parseBody wraps as { raw }. Returning either as
+        // success tells the caller a payment was accepted when it was not.
+        if (hasErrorEnvelope(parsed)) {
           throw normaliseError(res.status, parsed);
         }
         if (body?.raw !== undefined && Object.keys(body).length === 1) {

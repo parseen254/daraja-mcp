@@ -343,6 +343,10 @@ export function getCallback(ctx: ToolContext, args: { correlationId: string }) {
   return {
     found: true,
     ...record,
+    // resultDesc is echoed from the payload, so it carries customer text too.
+    // Sanitising the payload while spreading this raw would leave the hole
+    // open on the same call.
+    resultDesc: record.resultDesc === null ? null : sanitiseUntrusted(record.resultDesc),
     payload: sanitisePayload(record.payload),
     ...(untrusted ? { untrustedContent: UNTRUSTED_NOTICE } : {}),
   };
