@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>daraja-mcp — M-Pesa Daraja 3.0 for MCP</title>
+<meta name="description" content="An MCP server for the Safaricom M-Pesa Daraja 3.0 API. Full product surface including M-Pesa Ratiba, verified callbacks, and a simulator so you can test without a Safaricom account.">
+<meta property="og:title" content="daraja-mcp">
+<meta property="og:description" content="M-Pesa Daraja 3.0 for MCP. Ratiba included, callbacks verified, testable with no Safaricom account.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<style>
+  :root {
+    --ink: #12211c;
+    --muted: #5b6b64;
+    --line: #d8e2dd;
+    --bg: #fbfdfc;
+    --panel: #ffffff;
+    --accent: #0b7a5f;
+    --accent-soft: #e6f4ef;
+    --code-bg: #10201b;
+    --code-ink: #d9ebe4;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--accent-soft), var(--bg));
+    padding: 72px 0 56px;
+  }
+  h1 { font-size: 2.6rem; margin: 0 0 12px; letter-spacing: -0.02em; }
+  .tagline { font-size: 1.2rem; color: var(--muted); margin: 0 0 28px; max-width: 60ch; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .badge {
+    font-size: 0.8rem; padding: 4px 10px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+  }
+  .badge strong { color: var(--accent); font-weight: 600; }
+
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+    font-size: 0.88rem; line-height: 1.6; margin: 0 0 16px;
+  }
+  pre .c { color: #7fae9e; }
+  .hero-cmd { margin-bottom: 12px; }
+  .hero-note { color: var(--muted); font-size: 0.95rem; margin: 0; }
+
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .btn {
+    display: inline-block; padding: 10px 20px; border-radius: 8px;
+    text-decoration: none; font-weight: 600; font-size: 0.95rem;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent);
+  }
+  .btn.secondary { background: var(--panel); color: var(--ink); border-color: var(--line); }
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--line); }
+  h2 { font-size: 1.6rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h3 { font-size: 1.05rem; margin: 28px 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 28px; max-width: 62ch; }
+
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .card h3 { margin: 0 0 8px; font-size: 1rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  td code { font-size: 0.85rem; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; color: var(--accent); }
+  .tool-group { margin-bottom: 32px; }
+
+  ul { padding-left: 20px; color: var(--muted); }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--ink); }
+
+  footer { padding: 40px 0 60px; color: var(--muted); font-size: 0.9rem; }
+  footer a { color: var(--accent); }
+  a { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    header { padding: 48px 0 40px; }
+    section { padding: 40px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>daraja-mcp</h1>
+    <p class="tagline">
+      An MCP server for the Safaricom M-Pesa Daraja 3.0 API. Full product surface
+      including M-Pesa Ratiba, callbacks verified at the source, and a simulator
+      so you can try all of it without a Safaricom account.
+    </p>
+
+    <div class="badges">
+      <span class="badge"><strong>25</strong> tools</span>
+      <span class="badge"><strong>26</strong> Daraja products</span>
+      <span class="badge"><strong>79</strong> tests, no credentials needed</span>
+      <span class="badge">MIT</span>
+    </div>
+
+    <pre class="hero-cmd"><span class="c"># works on a machine that has never heard of Safaricom</span>
+npx daraja-mcp</pre>
+    <p class="hero-note">No credentials. No sandbox app. No tunnel.</p>
+
+    <div class="cta">
+      <a class="btn" href="https://github.com/parseen254/daraja-mcp">View on GitHub</a>
+      <a class="btn secondary" href="https://github.com/parseen254/daraja-mcp/blob/main/docs/quickstart.md">60-second quickstart</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Why another M-Pesa server</h2>
+    <p class="lede">
+      Several already exist. Most wrap one endpoint and stop. Three things make
+      Daraja genuinely awkward, and they are the three this handles.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <h3>The result is not in the response</h3>
+        <p>
+          You initiate a payment, get an acknowledgement, and the real outcome
+          arrives on a webhook a minute later. The <code>*_and_wait</code> tools
+          block on the callback and return the receipt number, so a model learns
+          whether money actually moved.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Callbacks are unsigned</h3>
+        <p>
+          Safaricom does not sign callback bodies. An open callback endpoint lets
+          anyone mark an unpaid order as paid. Inbound callbacks are checked
+          against Safaricom's published ranges, with an optional unguessable path
+          secret. Verification cannot be switched off in production.
+        </p>
+      </div>
+      <div class="card">
+        <h3>You cannot test it without an account</h3>
+        <p>
+          Daraja needs credentials and a public HTTPS callback URL before the
+          first request works. The bundled simulator speaks the real endpoints,
+          returns the real shapes, and pushes callbacks the way Safaricom does.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What a payment looks like</h2>
+    <p class="lede">One tool call, start to settled, with no Safaricom account.</p>
+
+    <pre><span class="c">// stk_push_and_wait — phone 0712345678, amount 100</span>
+{
+  "status": "success",
+  "checkoutRequestId": "ws_CO_895779657909821",
+  "resultCode": "0",
+  "resultDesc": "The service request is processed successfully.",
+  "metadata": {
+    "Amount": 100,
+    "MpesaReceiptNumber": "XZAWA9JEBX",
+    "TransactionDate": 20260731121937,
+    "PhoneNumber": 254712345678
+  }
+}</pre>
+
+    <h3>Failure paths are deterministic</h3>
+    <p class="lede">
+      Scenarios key off the amount, so you can exercise every branch locally
+      instead of finding them in production.
+    </p>
+
+    <table>
+      <thead><tr><th>Amount</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td><code>100</code></td><td>Success, with a receipt</td></tr>
+        <tr><td><code>1</code></td><td>Insufficient funds</td></tr>
+        <tr><td><code>1032</code></td><td>Cancelled by user</td></tr>
+        <tr><td><code>1037</code></td><td>Timeout, customer unreachable</td></tr>
+        <tr><td><code>2001</code></td><td>Wrong PIN</td></tr>
+        <tr><td><code>9999</code></td><td>Upstream 500, to exercise retries</td></tr>
+      </tbody>
+    </table>
+    <p class="hero-note">
+      Failed payments carry no <code>CallbackMetadata</code> at all, exactly as
+      on real Daraja. Code that reaches for the receipt number without checking
+      breaks here rather than at 2am.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Tools</h2>
+    <p class="lede">Twenty-five, across the whole Daraja 3.0 surface.</p>
+
+    <div class="tool-group">
+      <h3>Payments</h3>
+      <table>
+        <tbody>
+          <tr><td><code>stk_push</code></td><td>Send a payment prompt. Acknowledgement only.</td></tr>
+          <tr><td><code>stk_push_and_wait</code></td><td>Send a prompt and wait for the customer. Returns the receipt.</td></tr>
+          <tr><td><code>stk_query</code></td><td>Check the status of a previous prompt.</td></tr>
+          <tr><td><code>ratiba_create</code></td><td>Create a standing order for recurring collection.</td></tr>
+          <tr><td><code>ratiba_create_and_wait</code></td><td>Create one and wait for approval.</td></tr>
+          <tr><td><code>generate_qr</code></td><td>Generate a dynamic QR code.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tool-group">
+      <h3>Disbursement and treasury</h3>
+      <table>
+        <tbody>
+          <tr><td><code>b2c_payment</code></td><td>Pay a customer: refunds, withdrawals, salaries.</td></tr>
+          <tr><td><code>b2c_payment_and_wait</code></td><td>Same, returning the settled result.</td></tr>
+          <tr><td><code>b2b_payment</code></td><td>Pay a PayBill, a till, or top up a B2C account.</td></tr>
+          <tr><td><code>tax_remittance</code></td><td>Remit tax to KRA against a PRN.</td></tr>
+          <tr><td><code>business_to_pochi</code></td><td>Pay a Pochi la Biashara number.</td></tr>
+          <tr><td><code>account_balance</code></td><td>Query your business account balance.</td></tr>
+          <tr><td><code>transaction_status</code></td><td>Look up any past transaction.</td></tr>
+          <tr><td><code>reversal</code></td><td>Reverse a transaction paid into your shortcode.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tool-group">
+      <h3>Identity and fraud <span style="font-weight:400;color:var(--muted);font-size:0.9rem">(new in Daraja 3.0)</span></h3>
+      <table>
+        <tbody>
+          <tr><td><code>check_sim_swap</code></td><td>When was this number last SIM-swapped?</td></tr>
+          <tr><td><code>check_age_on_network</code></td><td>When was this number first registered?</td></tr>
+          <tr><td><code>validate_identity</code></td><td>Is this number registered to this national ID?</td></tr>
+          <tr><td><code>query_org_info</code></td><td>What business owns this shortcode, at what tariff?</td></tr>
+        </tbody>
+      </table>
+      <p class="hero-note">
+        Checking for a recent SIM swap before disbursing to an unfamiliar number
+        is a cheap control against SIM-swap fraud. <code>query_org_info</code>
+        catches a fat-fingered shortcode before the money leaves.
+      </p>
+    </div>
+
+    <div class="tool-group">
+      <h3>C2B and diagnostics</h3>
+      <table>
+        <tbody>
+          <tr><td><code>c2b_register_urls</code></td><td>Register validation and confirmation URLs.</td></tr>
+          <tr><td><code>c2b_simulate</code></td><td>Simulate a customer payment. Sandbox only.</td></tr>
+          <tr><td><code>pull_register</code></td><td>Register for the Pull Transactions API.</td></tr>
+          <tr><td><code>pull_transactions</code></td><td>Fetch C2B transactions for a window.</td></tr>
+          <tr><td><code>list_callbacks</code></td><td>Recent callbacks, newest first.</td></tr>
+          <tr><td><code>get_callback</code></td><td>Full payload for a correlation id.</td></tr>
+          <tr><td><code>server_health</code></td><td>Mode, credentials, receiver status.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Install</h2>
+    <pre><span class="c">// Claude Desktop, Cursor, Windsurf</span>
+{
+  "mcpServers": {
+    "daraja": {
+      "command": "npx",
+      "args": ["-y", "daraja-mcp"]
+    }
+  }
+}</pre>
+    <pre><span class="c"># Claude Code</span>
+claude mcp add daraja -- npx -y daraja-mcp</pre>
+    <p class="hero-note">
+      That runs against the simulator. Add credentials when you are ready for
+      the real sandbox. Per-client instructions are in
+      <a href="https://github.com/parseen254/daraja-mcp/blob/main/docs/clients.md">docs/clients.md</a>.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Daraja's own inconsistencies</h2>
+    <p class="lede">
+      Reproduced deliberately rather than tidied up, because Daraja rejects the
+      corrected forms. Worth knowing whether or not you use this server.
+    </p>
+    <ul>
+      <li><strong>B2C sends <code>InitiatorName</code></strong>; B2B and the treasury APIs send <code>Initiator</code>.</li>
+      <li><strong><code>RecieverIdentifierType</code></strong> is misspelled in the specification.</li>
+      <li><strong>B2C expects <code>Occassion</code></strong>; transaction status expects <code>Occasion</code>.</li>
+      <li><strong>Ratiba's sample says <code>StandingOrderNameName</code></strong> while its parameter table says <code>StandingOrderName</code>. Both are sent.</li>
+      <li><strong>Ratiba's sync response uses <code>ResponseHeader</code> and code <code>200</code></strong>; its callback uses <code>responseHeader</code> and code <code>0</code>. Different casing, different code space, same product.</li>
+      <li><strong>STK <code>ResultCode</code> is numeric</strong>; most other products send it as a string.</li>
+      <li><strong>Timestamps must be East Africa Time.</strong> UTC backdates the request three hours and Daraja rejects it as expired. The most common STK bug there is.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>
+      MIT licensed. Built from the public Daraja documentation by
+      <a href="https://parseen.dev">David Parseen</a>.
+    </p>
+    <p>
+      Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are
+      their trademarks.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
