@@ -1,0 +1,73 @@
+{
+  "name": "daraja-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the Safaricom M-Pesa Daraja 3.0 API. Full product surface including M-Pesa Ratiba, a hardened callback receiver, and an offline simulator so you can test without a Safaricom account.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mpesa",
+    "m-pesa",
+    "daraja",
+    "safaricom",
+    "payments",
+    "kenya",
+    "mobile-money",
+    "ratiba",
+    "standing-order",
+    "stk-push"
+  ],
+  "license": "MIT",
+  "author": "David Parseen Maitoyo <hello@parseen.dev>",
+  "homepage": "https://parseen254.github.io/daraja-mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parseen254/daraja-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/parseen254/daraja-mcp/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "daraja-mcp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "esbuild@0.21.5": true
+  }
+}
