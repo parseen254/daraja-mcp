@@ -11,3 +11,4 @@ coverage/
 *.tgz
 coverage/
 .playwright-mcp/
+site/
