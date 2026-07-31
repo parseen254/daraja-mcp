@@ -158,7 +158,9 @@ export async function checkSimSwap(ctx: ToolContext, args: { phoneNumber: string
   // fraud signal, and this is far cheaper than a chargeback.
   return ctx.client.post(
     '/imsi/v2/checkATI',
-    { msisdn: msisdnOrThrow(args.phoneNumber) },
+    // The identity APIs use "customerNumber", not the "msisdn" the payment
+    // products use.
+    { customerNumber: msisdnOrThrow(args.phoneNumber) },
     { retryable: true },
   );
 }
@@ -170,25 +172,49 @@ export const ageOnNetworkInput = {
 export async function checkAgeOnNetwork(ctx: ToolContext, args: { phoneNumber: string }) {
   return ctx.client.post(
     '/registration/lookup/v1/checkATI',
-    { msisdn: msisdnOrThrow(args.phoneNumber) },
+    { customerNumber: msisdnOrThrow(args.phoneNumber) },
     { retryable: true },
   );
 }
 
+/** ID types Safaricom accepts, from the Mobile Number Validation spec. */
+const ID_TYPES = {
+  national: '01',
+  military: '02',
+  passport: '05',
+} as const;
+
 export const validateIdentityInput = {
   phoneNumber: z.string().describe('Number to validate.'),
-  idNumber: z.string().describe('National ID number the line should be registered against.'),
+  idNumber: z.string().describe('Identification number the line should be registered against.'),
+  idType: z
+    .enum(['national', 'military', 'passport'])
+    .default('national')
+    .describe('Which identity document the number belongs to.'),
+  shortCode: z.string().optional(),
 };
 
 export async function validateIdentity(
   ctx: ToolContext,
-  args: { phoneNumber: string; idNumber: string },
+  args: {
+    phoneNumber: string;
+    idNumber: string;
+    idType?: 'national' | 'military' | 'passport';
+    shortCode?: string;
+  },
 ) {
+  const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
+
   return ctx.client.post(
     '/v1/KYC-validation/validateID',
     {
+      // Every field here is required by the spec. Sending only msisdn and an
+      // id number, as an earlier version did, is rejected.
+      requestRefID: crypto.randomUUID(),
+      shortCode,
       msisdn: msisdnOrThrow(args.phoneNumber),
-      IDNumber: args.idNumber,
+      idType: ID_TYPES[args.idType ?? 'national'],
+      idNumber: args.idNumber,
     },
     { retryable: true },
   );

@@ -49,7 +49,11 @@ export async function createServer(opts: CreateServerOptions = {}): Promise<Runn
 
   let receiver: CallbackReceiver | null = null;
   if (!opts.disableReceiver && !process.env.DARAJA_DISABLE_RECEIVER) {
-    receiver = new CallbackReceiver({ config: effectiveConfig.callback, onLog: log });
+    receiver = new CallbackReceiver({
+      config: effectiveConfig.callback,
+      trustProxy: effectiveConfig.callback.trustProxy,
+      onLog: log,
+    });
     await receiver.start();
   }
 

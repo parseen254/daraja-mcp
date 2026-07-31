@@ -20,13 +20,21 @@ import { CallbackStore, correlationIdOf, kindOf, outcomeOf, type CallbackRecord 
 
 interface Waiter {
   correlationId: string;
-  resolve: (record: CallbackRecord) => void;
+  /** Resolves with null when the wait times out or the receiver shuts down. */
+  resolve: (record: CallbackRecord | null) => void;
   timer: NodeJS.Timeout;
 }
 
 export interface ReceiverOptions {
   config: CallbackConfig;
-  /** Trust X-Forwarded-For. Required behind ngrok or a load balancer. */
+  /**
+   * Trust X-Forwarded-For when identifying the caller.
+   *
+   * Off by default. The header is set by whoever sends the request, so
+   * trusting it without a proxy in front means anyone can claim to be
+   * Safaricom and defeat the allowlist entirely. Turn it on only when a proxy
+   * you control terminates the connection and rewrites the header.
+   */
   trustProxy?: boolean;
   onLog?: (message: string) => void;
   /** Disable disk persistence. Used by tests. */
@@ -47,7 +55,7 @@ export class CallbackReceiver {
 
   constructor(opts: ReceiverOptions) {
     this.config = opts.config;
-    this.trustProxy = opts.trustProxy ?? true;
+    this.trustProxy = opts.trustProxy ?? false;
     this.onLog = opts.onLog ?? (() => {});
     this.store = new CallbackStore(this.config.storeDir, { persist: opts.persist });
   }
@@ -71,8 +79,14 @@ export class CallbackReceiver {
   }
 
   async stop(): Promise<void> {
+    // Settle anyone still waiting before tearing down. Clearing the timers
+    // without resolving leaves a tool awaiting a callback that can no longer
+    // arrive, so a payment in flight would hang rather than report as pending.
     for (const list of this.waiters.values()) {
-      for (const w of list) clearTimeout(w.timer);
+      for (const w of list) {
+        clearTimeout(w.timer);
+        w.resolve(null);
+      }
     }
     this.waiters.clear();
 

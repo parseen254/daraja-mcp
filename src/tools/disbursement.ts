@@ -287,7 +287,9 @@ export async function businessToPochi(
   return ctx.client.post('/mpesa/b2pochi/v1/paymentrequest', {
     InitiatorName: initiator,
     SecurityCredential: credential,
-    CommandID: 'BusinessPayment',
+    // Pochi la Biashara has its own command. BusinessPayment targets a
+    // registered customer's regular M-Pesa account, not their business wallet.
+    CommandID: 'BusinessPayToPochi',
     Amount: String(args.amount),
     PartyA: shortCode,
     PartyB: msisdnOrThrow(args.phoneNumber),

@@ -204,12 +204,14 @@ describe('taxRemittance', () => {
 });
 
 describe('businessToPochi', () => {
-  it('sends a business payment to the Pochi number', async () => {
+  it('uses the Pochi-specific command', async () => {
     const h = makeHarness();
     await businessToPochi(h.ctx, { phoneNumber: '0712345678', amount: 300 });
     const body = h.lastBody();
 
-    expect(body.CommandID).toBe('BusinessPayment');
+    // BusinessPayment would land in the recipient's regular M-Pesa account
+    // rather than their business wallet. The spec names a distinct command.
+    expect(body.CommandID).toBe('BusinessPayToPochi');
     expect(body.PartyB).toBe('254712345678');
     expect(body.InitiatorName).toBe('testapi');
   });

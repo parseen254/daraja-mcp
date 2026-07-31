@@ -308,6 +308,109 @@ describe('transport failures', () => {
   });
 });
 
+describe('a 200 is not automatically success', () => {
+  it('rejects a 200 carrying an errorCode envelope', async () => {
+    const fetchImpl = async (url: string) =>
+      url.includes('/oauth/')
+        ? token()
+        : jsonResponse({ requestId: 'r', errorCode: '500.001.1001', errorMessage: 'Boom' });
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    // Returning this as success tells the caller a payment was accepted.
+    await expect(client.post('/x', {})).rejects.toBeInstanceOf(DarajaError);
+  });
+
+  it('rejects a 200 carrying only an errorMessage', async () => {
+    const fetchImpl = async (url: string) =>
+      url.includes('/oauth/') ? token() : jsonResponse({ errorMessage: 'Something went wrong' });
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    await expect(client.post('/x', {})).rejects.toBeInstanceOf(DarajaError);
+  });
+
+  it('rejects an HTML gateway page served with a 200', async () => {
+    const fetchImpl = async (url: string) =>
+      url.includes('/oauth/')
+        ? token()
+        : new Response('<html><body>502 Bad Gateway</body></html>', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          });
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    const err = await client.post('/x', {}).catch((e: unknown) => e);
+    expect(err).toMatchObject({ kind: 'upstream' });
+    // A payment in this state is unresolved, not failed.
+    expect((err as DarajaError).hint).toContain('query its status');
+  });
+
+  it('still accepts a legitimate response that happens to contain raw data', async () => {
+    const fetchImpl = async (url: string) =>
+      url.includes('/oauth/')
+        ? token()
+        : jsonResponse({ ResponseCode: '0', raw: 'some field', other: true });
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    // Only a body that is nothing but { raw } indicates an unparseable page.
+    await expect(client.post('/x', {})).resolves.toBeTruthy();
+  });
+});
+
+describe('concurrent authentication', () => {
+  it('makes one token request for many simultaneous calls', async () => {
+    let tokenCalls = 0;
+    const fetchImpl = async (url: string) => {
+      if (url.includes('/oauth/')) {
+        tokenCalls += 1;
+        // A real token request takes time; that window is where the stampede
+        // happens.
+        await new Promise((r) => setTimeout(r, 20));
+        return token();
+      }
+      return jsonResponse({ ResponseCode: '0' });
+    };
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    await Promise.all(Array.from({ length: 10 }, () => client.post('/x', {})));
+
+    // Daraja rate limits this endpoint, so ten parallel tool calls on a cold
+    // cache must not become ten authentication attempts.
+    expect(tokenCalls).toBe(1);
+  });
+
+  it('serves all concurrent callers the same token', async () => {
+    const fetchImpl = async (url: string) => {
+      if (url.includes('/oauth/')) {
+        await new Promise((r) => setTimeout(r, 10));
+        return token();
+      }
+      return jsonResponse({ ResponseCode: '0' });
+    };
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    const tokens = await Promise.all(
+      Array.from({ length: 5 }, () => client.getAccessToken()),
+    );
+    expect(new Set(tokens).size).toBe(1);
+  });
+
+  it('allows a fresh request after an in-flight one fails', async () => {
+    let attempt = 0;
+    const fetchImpl = async (url: string) => {
+      if (!url.includes('/oauth/')) return jsonResponse({ ResponseCode: '0' });
+      attempt += 1;
+      return attempt === 1
+        ? jsonResponse({ errorCode: '400.008.01' }, 400)
+        : token();
+    };
+    const client = new DarajaClient(config(), fetchImpl as unknown as typeof fetch);
+
+    // A failed shared promise must not be cached and poison later callers.
+    await expect(client.getAccessToken()).rejects.toBeInstanceOf(DarajaError);
+    await expect(client.getAccessToken()).resolves.toBe('tok');
+  });
+});
+
 describe('accessors', () => {
   it('exposes the mode and base URL', () => {
     const client = new DarajaClient(config());
