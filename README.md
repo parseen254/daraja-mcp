@@ -223,7 +223,15 @@ import { DarajaClient, DarajaSimulator, loadConfig } from 'daraja-mcp';
 npm install
 npm test          # 79 tests, no credentials needed
 npm run build
+npm run verify    # typecheck, test, build, and an end-to-end MCP check
 ```
+
+`npm run verify` is what CI would run. It drives the built CLI over stdio MCP
+through a full payment cycle, a cancellation, and a standing order, all against
+the simulator, so it needs no Safaricom credentials.
+
+The docs site is served from the `gh-pages` branch. To update it, edit
+`site/index.html` on `main` and run `npm run docs:publish`.
 
 ## Disclaimer
 
