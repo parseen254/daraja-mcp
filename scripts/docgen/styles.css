@@ -1,0 +1,790 @@
+/* daraja-mcp documentation.
+   Flat surfaces, 1px borders, one green. Green marks the money path and blue
+   the control path, matching the project's own diagrams. No webfonts, no
+   framework: the whole page should land on a mid-range phone quickly. */
+
+:root {
+  --bg-base: #ffffff;
+  --bg-raised: #f4f7f6;
+  --bg-inset: #e9efed;
+  --bg-code: #0d1412;
+  --text-1: #16211d;
+  --text-2: #3f4d48;
+  --text-3: #5b6a64;
+  --border: #d7e0dd;
+  --border-strong: #b9c6c2;
+  --accent: #0b7a5f;
+  --accent-ink: #0a6a52;
+  --accent-wash: #e6f2ee;
+  --ok: #0a6a52;
+  --pending: #8a5800;
+  --danger: #b3261e;
+  --info: #0b5cab;
+  --ok-wash: #e6f2ee;
+  --pending-wash: #fbf1de;
+  --danger-wash: #fbeae9;
+  --info-wash: #e7f0fa;
+  --focus: #0b5cab;
+  --code-fg: #d5ddd9;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg-base: #0e1513;
+  --bg-raised: #131c18;
+  --bg-inset: #1a2620;
+  --text-1: #e8edeb;
+  --text-2: #a9b6b0;
+  --text-3: #7f8c86;
+  --border: #24312b;
+  --border-strong: #3a4a42;
+  --accent: #3ecf9a;
+  --accent-ink: #35c491;
+  --accent-wash: #12352a;
+  --ok: #3ecf9a;
+  --pending: #e9b95c;
+  --danger: #f2928b;
+  --info: #82b8ff;
+  --ok-wash: #12352a;
+  --pending-wash: #33270e;
+  --danger-wash: #3a1512;
+  --info-wash: #12263d;
+  --focus: #82b8ff;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-base: #0e1513;
+    --bg-raised: #131c18;
+    --bg-inset: #1a2620;
+    --text-1: #e8edeb;
+    --text-2: #a9b6b0;
+    --text-3: #7f8c86;
+    --border: #24312b;
+    --border-strong: #3a4a42;
+    --accent: #3ecf9a;
+    --accent-ink: #35c491;
+    --accent-wash: #12352a;
+    --ok: #3ecf9a;
+    --pending: #e9b95c;
+    --danger: #f2928b;
+    --info: #82b8ff;
+    --ok-wash: #12352a;
+    --pending-wash: #33270e;
+    --danger-wash: #3a1512;
+    --info-wash: #12263d;
+    --focus: #82b8ff;
+    color-scheme: dark;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+body {
+  margin: 0;
+  background: var(--bg-base);
+  color: var(--text-1);
+  font: 16px/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+code, pre, kbd {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Skip link, first in tab order. */
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--bg-raised);
+  color: var(--text-1);
+  padding: 10px 16px;
+  z-index: 100;
+  border: 1px solid var(--border-strong);
+  border-radius: 0 0 6px 0;
+}
+.skip:focus { left: 0; }
+
+/* ---------- header ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 clamp(16px, 3vw, 28px);
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+  text-decoration: none;
+  font-size: 0.98rem;
+  white-space: nowrap;
+}
+.brand span { color: var(--accent); }
+
+.header-links {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-links a, .icon-btn {
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+.header-links a:hover, .icon-btn:hover { background: var(--bg-inset); color: var(--text-1); }
+
+.nav-toggle { display: none; }
+
+.hamburger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text-2);
+}
+
+/* ---------- shell ---------- */
+
+.shell {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr) 216px;
+  max-width: 1400px;
+  margin-inline: auto;
+  /* Stretch, not start: otherwise the sidebar's background ends where its
+     content does and leaves a hard edge halfway down the page. */
+  align-items: stretch;
+}
+
+.sidebar {
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border);
+}
+
+/* The sticky element is inside the column, so the column can stay full height
+   while the navigation itself follows the reader. */
+.sidebar-inner {
+  position: sticky;
+  top: 56px;
+  /* Fit inside the viewport below the header, and scroll internally when the
+     navigation is taller. Without the explicit height the sticky box clips
+     its own overflow on short viewports. */
+  height: calc(100dvh - 56px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 14px 40px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.sidebar-inner::-webkit-scrollbar { width: 8px; }
+.sidebar-inner::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+.sidebar-inner::-webkit-scrollbar-track { background: transparent; }
+
+.sidebar h2 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  margin: 20px 0 6px;
+  padding-left: 10px;
+  font-weight: 650;
+}
+.sidebar h2:first-child { margin-top: 0; }
+
+.sidebar ul { list-style: none; margin: 0; padding: 0; }
+
+.sidebar a {
+  display: block;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  text-decoration: none;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+.sidebar a:hover { background: var(--bg-inset); color: var(--text-1); }
+.sidebar a[aria-current='page'] {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-weight: 550;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+main {
+  padding: 40px clamp(20px, 3.5vw, 56px) 96px;
+  min-width: 0;
+}
+
+.toc {
+  position: sticky;
+  top: 56px;
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
+  padding: 40px 20px 48px 8px;
+  font-size: 0.82rem;
+}
+.toc p {
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 0.7rem;
+  color: var(--text-3);
+  margin: 0 0 8px;
+  font-weight: 650;
+}
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc a {
+  display: block;
+  padding: 4px 0;
+  color: var(--text-3);
+  text-decoration: none;
+  line-height: 1.45;
+}
+.toc a:hover, .toc a.active { color: var(--text-1); }
+.toc .lvl-3 { padding-left: 12px; }
+
+/* ---------- prose ---------- */
+
+/* Cap the measure on prose only. Tables and code need the extra width, and a
+   68ch line is about 12 words, which is where long-form reading is easiest. */
+main > p, main > ul, main > ol, main > blockquote, main > .callout {
+  max-width: 68ch;
+}
+main > h1, main > h2, main > h3, main > h4 { max-width: 46ch; }
+main > .table-wrap, main > figure.code { max-width: min(100%, 84ch); }
+
+h1 {
+  font-size: 1.73rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+  font-weight: 650;
+}
+
+/* The landing page gets a larger title and a rule under the hero, so it reads
+   as an entry point rather than another chapter. */
+body[data-page='index'] h1 {
+  font-size: 2.3rem;
+  letter-spacing: -0.028em;
+}
+body[data-page='index'] h1 + p {
+  font-size: 1.18rem;
+  max-width: 58ch;
+}
+
+/* Badge row under the hero: facts a skimming reader wants first. */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  max-width: none;
+}
+.facts li {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-2);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.facts strong { color: var(--accent-ink); font-weight: 650; }
+
+/* Link row directly under the hero, styled as actions. */
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 2rem;
+  max-width: none;
+}
+.hero-links a {
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 550;
+  padding: 9px 18px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  background: var(--bg-raised);
+  transition: background-color 120ms ease, border-color 120ms ease;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+.hero-links a:hover { border-color: var(--border-strong); background: var(--bg-inset); }
+.hero-links a:first-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+:root[data-theme='dark'] .hero-links a:first-child { color: #06120e; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .hero-links a:first-child { color: #06120e; }
+}
+.hero-links a:first-child:hover { filter: brightness(1.08); }
+
+h2 {
+  font-size: 1.44rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  font-weight: 650;
+  margin: 2.5rem 0 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Tool names are identifiers, so they read as code rather than prose. */
+body[data-page^='tools-'] main h2 {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 1.16rem;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+h3 { font-size: 1.2rem; line-height: 1.45; font-weight: 650; margin: 1.75rem 0 0.5rem; }
+h4 { font-size: 1rem; font-weight: 650; margin: 1.25rem 0 0.4rem; }
+
+.anchor {
+  margin-left: 8px;
+  color: var(--text-3);
+  text-decoration: none;
+  opacity: 0;
+  font-weight: 400;
+}
+h2:hover .anchor, h3:hover .anchor, .anchor:focus { opacity: 1; }
+
+p { margin: 0 0 1rem; }
+
+/* The paragraph straight after the page title is the lede: slightly larger,
+   slightly quieter, and given room before the body starts. */
+h1 + p {
+  font-size: 1.09rem;
+  line-height: 1.6;
+  color: var(--text-2);
+  margin-bottom: 1.6rem;
+}
+
+/* A link row directly after a paragraph reads as actions rather than prose. */
+main > p > a + a { margin-left: 0; }
+
+ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+li { margin-bottom: 0.35rem; }
+
+blockquote {
+  margin: 0 0 1rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-2);
+}
+
+:not(pre) > code {
+  background: var(--bg-inset);
+  padding: 0.12em 0.36em;
+  border-radius: 4px;
+  font-size: 0.86em;
+  color: var(--accent-ink);
+  overflow-wrap: break-word;
+}
+
+/* ---------- code blocks ---------- */
+
+figure.code {
+  margin: 0 0 1.25rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-code);
+}
+
+figure.code figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 8px 0 14px;
+  background: #16211d;
+  border-bottom: 1px solid #24312b;
+}
+
+.code-lang {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.72rem;
+  color: #8fa39b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.copy {
+  font: inherit;
+  font-size: 0.74rem;
+  color: #b8c7c1;
+  background: transparent;
+  border: 1px solid #2f3f38;
+  border-radius: 5px;
+  padding: 3px 9px;
+  cursor: pointer;
+  min-height: 26px;
+}
+.copy:hover { background: #1f2c26; color: #e8edeb; }
+.copy[data-copied] { color: #3ecf9a; border-color: #2a6650; }
+
+figure.code pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  color: var(--code-fg);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+figure.code code { background: none; padding: 0; color: inherit; }
+
+/* ---------- tables ---------- */
+
+.table-wrap { overflow-x: auto; margin: 0 0 1.25rem; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+th {
+  /* 12.8px: small enough to sit back, large enough to read. Below 12px is
+     uncomfortable regardless of contrast. */
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  font-weight: 650;
+  border-bottom-color: var(--border-strong);
+  white-space: nowrap;
+}
+/* Most cell code is a short identifier and reads better unbroken, but an enum
+   type can be long enough to need wrapping. */
+td code { white-space: nowrap; }
+td:nth-child(2) code { white-space: normal; overflow-wrap: anywhere; }
+
+/* On a phone a three-column parameter table has nowhere to put the type, so
+   the columns collapse into stacked rows with their headers inline. */
+@media (max-width: 640px) {
+  .table-wrap table { font-size: 0.88rem; }
+
+  .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table-wrap tbody tr {
+    display: block;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-wrap tbody tr:last-child { border-bottom: 0; }
+  .table-wrap tbody tr:nth-child(even) { background: none; }
+
+  .table-wrap tbody td {
+    display: block;
+    border: 0;
+    padding: 2px 0;
+  }
+  .table-wrap tbody td:first-child { font-weight: 550; margin-bottom: 2px; }
+  .table-wrap tbody td:nth-child(2) { color: var(--text-3); }
+  .table-wrap tbody td code { white-space: normal; }
+  .table-wrap tbody td:empty { display: none; }
+}
+tbody tr:last-child td { border-bottom: 0; }
+/* Zebra striping earns its keep once a table runs past a few rows. */
+tbody tr:nth-child(even) { background: var(--bg-raised); }
+
+/* ---------- callouts ---------- */
+
+.callout {
+  margin: 0 0 1.25rem;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: var(--bg-raised);
+}
+.callout p { margin: 0; }
+.callout p + p { margin-top: 0.5rem; }
+.callout-title {
+  font-weight: 650;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem !important;
+}
+
+.callout-note { border-left-color: var(--info); background: var(--info-wash); }
+.callout-note .callout-title { color: var(--info); }
+.callout-warning { border-left-color: var(--pending); background: var(--pending-wash); }
+.callout-warning .callout-title { color: var(--pending); }
+
+/* Real money warnings get a filled bar: they must not be skimmed past. */
+.callout-real-money {
+  border-color: var(--danger);
+  border-left-color: var(--danger);
+  background: var(--danger-wash);
+  padding: 0;
+  overflow: hidden;
+}
+.callout-real-money .callout-title {
+  background: var(--danger);
+  color: #fff;
+  margin: 0 !important;
+  padding: 6px 16px;
+}
+.callout-real-money > p:not(.callout-title) { padding: 12px 16px; }
+
+/* ---------- tool reference ---------- */
+
+.tool {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  padding: 20px 22px;
+  margin: 0 0 1.5rem;
+  max-width: min(100%, 82ch);
+}
+
+.tool-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tool h3 {
+  margin: 0;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.tool h3 .anchor { font-family: system-ui, sans-serif; }
+
+.pill {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.pill-money { background: var(--ok-wash); color: var(--ok); }
+.pill-control { background: var(--info-wash); color: var(--info); }
+.pill-gated { background: var(--danger-wash); color: var(--danger); }
+.pill-waits { background: var(--pending-wash); color: var(--pending); }
+
+.tool-desc { color: var(--text-2); margin: 0.6rem 0 0.9rem; font-size: 0.94rem; }
+
+.params { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 20px; font-size: 0.87rem; }
+.params dt { font-family: ui-monospace, Menlo, monospace; color: var(--text-1); }
+.params dd { margin: 0; color: var(--text-2); }
+.params .req { color: var(--danger); font-size: 0.72rem; margin-left: 3px; }
+.params .type { color: var(--text-3); font-size: 0.78rem; display: block; font-family: ui-monospace, Menlo, monospace; }
+
+@media (max-width: 560px) {
+  .params { grid-template-columns: 1fr; gap: 2px 0; }
+  .params dd { margin-bottom: 10px; }
+}
+
+/* ---------- page furniture ---------- */
+
+/* Agent affordances. Grouped as one segmented control so they read as a
+   related set rather than three loose buttons competing with the title. */
+.page-actions {
+  display: inline-flex;
+  margin: 0 0 1.5rem;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--bg-raised);
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.page-actions a, .page-actions button {
+  font: inherit;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--text-2);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--border);
+  padding: 0 12px;
+  text-decoration: none;
+  cursor: pointer;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
+}
+.page-actions > *:last-child { border-right: 0; }
+.page-actions a:hover, .page-actions button:hover {
+  background: var(--bg-inset);
+  color: var(--text-1);
+}
+.page-actions a:focus-visible, .page-actions button:focus-visible {
+  outline-offset: -2px;
+}
+
+.next-prev {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  max-width: 68ch;
+}
+.next-prev a {
+  display: block;
+  text-decoration: none;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.next-prev a:hover {
+  border-color: var(--accent);
+  background: var(--bg-inset);
+}
+.next-prev span {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+.next-prev strong { color: var(--text-1); font-weight: 550; font-size: 0.95rem; }
+.next-prev .next { text-align: right; grid-column: 2; }
+.next-prev .prev { grid-column: 1; }
+/* One neighbour: span the row instead of leaving a gap. */
+.next-prev-single { grid-template-columns: 1fr; }
+.next-prev-single .next, .next-prev-single .prev { grid-column: 1; }
+
+@media (max-width: 560px) {
+  .next-prev { grid-template-columns: 1fr; }
+  .next-prev .next, .next-prev .prev { grid-column: 1; text-align: left; }
+}
+
+footer.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 32px clamp(20px, 4vw, 48px) 40px;
+  color: var(--text-3);
+  font-size: 0.85rem;
+  text-align: center;
+}
+footer.site-footer p {
+  margin: 0 auto 6px;
+  max-width: 72ch;
+}
+footer.site-footer p:last-child { margin-bottom: 0; font-size: 0.8rem; }
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1100px) {
+  .shell { grid-template-columns: 248px minmax(0, 1fr); }
+  .toc { display: none; }
+}
+
+@media (max-width: 880px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .hamburger { display: inline-flex; }
+
+  /* Narrow screens cannot fit every header link beside the brand. Keep the
+     theme toggle, since the sidebar carries navigation anyway. */
+  .site-header { gap: 8px; padding: 0 12px; }
+  .header-links a { display: none; }
+
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+    z-index: 60;
+    border-right: 1px solid var(--border-strong);
+    max-height: none;
+  }
+  .nav-toggle:checked ~ .shell .sidebar { transform: translateX(0); }
+  .nav-toggle:checked ~ .scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 56px 0 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+    z-index: 55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+@media print {
+  .site-header, .sidebar, .toc, .page-actions, .next-prev, .scrim { display: none; }
+  .shell { grid-template-columns: 1fr; }
+}

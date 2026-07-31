@@ -55,8 +55,9 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build && npm run test",
     "verify": "npm run typecheck && npm test && npm run build && node scripts/smoke.mjs",
-    "docs:publish": "bash scripts/publish-docs.sh",
-    "coverage:badge": "npm run test:coverage && node scripts/coverage-badge.mjs"
+    "docs:publish": "npm run docs:build && bash scripts/publish-docs.sh",
+    "coverage:badge": "npm run test:coverage && node scripts/coverage-badge.mjs",
+    "docs:build": "npm run build && node scripts/docgen/build.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
