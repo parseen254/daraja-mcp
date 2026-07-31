@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Quickstart — daraja-mcp</title>
+<meta name="description" content="From nothing to a settled M-Pesa payment in about a minute, with no Safaricom account.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/quickstart/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/quickstart.md" title="Markdown version">
+<meta property="og:title" content="Quickstart — daraja-mcp">
+<meta property="og:description" content="From nothing to a settled M-Pesa payment in about a minute, with no Safaricom account.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/quickstart/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="quickstart">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/" aria-current="page">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/quickstart.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/quickstart.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="quickstart">Quickstart<a class="anchor" href="#quickstart" aria-label="Link to this section">#</a></h1>
+<p>No Safaricom account. No sandbox app. No tunnel. This runbook gets you from nothing to a settled payment with a receipt number.</p>
+<h2 id="what-you-need">What you need<a class="anchor" href="#what-you-need" aria-label="Link to this section">#</a></h2>
+<p>Node 20 or newer. That is the whole list.</p>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>node --version</code></pre></figure>
+<h2 id="1-start-the-server-10-seconds">1. Start the server (10 seconds)<a class="anchor" href="#1-start-the-server-10-seconds" aria-label="Link to this section">#</a></h2>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>npx -y daraja-mcp</code></pre></figure>
+<p>You should see:</p>
+<figure class="code"><figcaption><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>[daraja-mcp] Simulator mode. No Safaricom credentials required.
+[daraja-mcp] Mode: simulator
+[daraja-mcp] Callback receiver listening on port 8787
+[daraja-mcp] Ready.</code></pre></figure>
+<p>The server is now speaking MCP on stdin and stdout. It started a local fake Daraja and a callback receiver, so the full asynchronous cycle works offline.</p>
+<p>Leave it running, or press Ctrl-C and wire it into a client instead.</p>
+<h2 id="2-wire-it-into-your-client-30-seconds">2. Wire it into your client (30 seconds)<a class="anchor" href="#2-wire-it-into-your-client-30-seconds" aria-label="Link to this section">#</a></h2>
+<p><strong>Claude Code</strong></p>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>claude mcp add daraja -- npx -y daraja-mcp</code></pre></figure>
+<p><strong>Claude Desktop</strong></p>
+<p>Edit <code>claude_desktop_config.json</code>:</p>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;daraja&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;daraja-mcp&quot;]
+    }
+  }
+}</code></pre></figure>
+<p>macOS puts that file at <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>. Restart the app afterwards.</p>
+<p>Other clients: <a href="/daraja-mcp/clients/">Install per client</a>.</p>
+<h2 id="3-take-a-payment-20-seconds">3. Take a payment (20 seconds)<a class="anchor" href="#3-take-a-payment-20-seconds" aria-label="Link to this section">#</a></h2>
+<p>Ask your assistant:</p>
+<blockquote><p>Send an M-Pesa payment request for 100 shillings to 0712345678 and tell me whether it went through.</p></blockquote>
+<p>It should call <code>stk_push_and_wait</code> and come back with something like:</p>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;checkoutRequestId&quot;: &quot;ws_CO_895779657909821&quot;,
+  &quot;resultCode&quot;: &quot;0&quot;,
+  &quot;resultDesc&quot;: &quot;The service request is processed successfully.&quot;,
+  &quot;metadata&quot;: {
+    &quot;Amount&quot;: 100,
+    &quot;MpesaReceiptNumber&quot;: &quot;XZAWA9JEBX&quot;,
+    &quot;TransactionDate&quot;: 20260731121937,
+    &quot;PhoneNumber&quot;: 254712345678
+  }
+}</code></pre></figure>
+<p>That is a complete payment cycle: prompt sent, customer accepted, callback received, receipt returned. On real Daraja the same call does the same thing, except a phone rings.</p>
+<h2 id="4-try-the-failure-paths">4. Try the failure paths<a class="anchor" href="#4-try-the-failure-paths" aria-label="Link to this section">#</a></h2>
+<p>This is the part you cannot do on real Daraja without a lot of setup and a cooperative human. The simulator keys scenarios off the amount:</p>
+<div class="table-wrap"><table><thead><tr><th>Ask for</th><th>You get</th></tr></thead><tbody><tr><td>100 shillings</td><td>Success with a receipt</td></tr><tr><td>1 shilling</td><td>Insufficient funds</td></tr><tr><td>1032 shillings</td><td>Cancelled by user</td></tr><tr><td>1037 shillings</td><td>Timeout, customer unreachable</td></tr><tr><td>2001 shillings</td><td>Wrong PIN</td></tr><tr><td>9999 shillings</td><td>Upstream server error</td></tr></tbody></table></div>
+<p>Try:</p>
+<blockquote><p>Send an M-Pesa request for 1032 shillings to 0712345678.</p></blockquote>
+<p>You get a failure with <code>ResultCode 1032</code> and no receipt. Note the response has no <code>metadata</code> at all: real Daraja omits <code>CallbackMetadata</code> entirely on failed payments, and code that reaches for the receipt number without checking is a common production crash. Better to meet it here.</p>
+<h2 id="5-try-a-standing-order">5. Try a standing order<a class="anchor" href="#5-try-a-standing-order" aria-label="Link to this section">#</a></h2>
+<p>Ratiba is the recurring-payment product: subscriptions, loan repayments, insurance premiums, SACCO contributions.</p>
+<blockquote><p>Set up a monthly M-Pesa standing order of 2000 shillings from 0712345678 for a gym membership, starting 1 August 2026 and ending 1 August 2027.</p></blockquote>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;details&quot;: {
+    &quot;standingOrderName&quot;: &quot;Gym membership&quot;,
+    &quot;amount&quot;: &quot;2000.00&quot;,
+    &quot;reminderScheduleId&quot;: &quot;3813734&quot;,
+    &quot;firstPaymentReminderDate&quot;: &quot;20260807&quot;,
+    &quot;status&quot;: &quot;ACTIVE&quot;,
+    &quot;Msisdn&quot;: &quot;*********678&quot;
+  }
+}</code></pre></figure>
+<p>The masked MSISDN is not a bug: Safaricom masks it in Ratiba callbacks.</p>
+<p>Standing order names must be unique per customer. Ask for the same name twice and the second attempt is rejected, same as on real Daraja.</p>
+<h2 id="what-next">What next<a class="anchor" href="#what-next" aria-label="Link to this section">#</a></h2>
+<ul><li>Point it at the real sandbox: <a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li>Go to production: <a href="/daraja-mcp/going-live/">Going live</a></li><li>Something not working: <a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/"><span>Previous</span><strong>Overview</strong></a><a class="next" href="/daraja-mcp/clients/"><span>Next</span><strong>Install per client</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#what-you-need">What you need</a></li><li class="lvl-2"><a href="#1-start-the-server-10-seconds">1. Start the server (10 seconds)</a></li><li class="lvl-2"><a href="#2-wire-it-into-your-client-30-seconds">2. Wire it into your client (30 seconds)</a></li><li class="lvl-2"><a href="#3-take-a-payment-20-seconds">3. Take a payment (20 seconds)</a></li><li class="lvl-2"><a href="#4-try-the-failure-paths">4. Try the failure paths</a></li><li class="lvl-2"><a href="#5-try-a-standing-order">5. Try a standing order</a></li><li class="lvl-2"><a href="#what-next">What next</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Payments — daraja-mcp</title>
+<meta name="description" content="Payments: 6 tools.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/tools-payments/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/tools-payments.md" title="Markdown version">
+<meta property="og:title" content="Payments — daraja-mcp">
+<meta property="og:description" content="Payments: 6 tools.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/tools-payments/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="tools-payments">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/" aria-current="page">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/tools-payments.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/tools-payments.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="payments">Payments<a class="anchor" href="#payments" aria-label="Link to this section">#</a></h1>
+<p>Collecting money from a customer. These are the flows where the customer approves a prompt on their own phone, so a person is always in the loop.</p>
+<h2 id="stk-push">stk_push<a class="anchor" href="#stk-push" aria-label="Link to this section">#</a></h2>
+<p><code>money</code></p>
+<p>Send an M-Pesa payment prompt (STK push) to a customer. Returns immediately with an acknowledgement; it does NOT confirm payment. Use stk_push_and_wait if you need the outcome.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Customer phone number. Accepts 07..., +2547..., or 2547... and is normalised.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES. Whole numbers only.</td></tr><tr><td><code>accountReference</code></td><td><code>string</code></td><td>Account identifier shown on the customer statement. Max 12 characters.</td></tr><tr><td><code>transactionDesc</code></td><td><code>string</code></td><td>Short description. Max 13 characters.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td>Overrides DARAJA_SHORTCODE.</td></tr><tr><td><code>callbackUrl</code></td><td><code>string</code></td><td>Overrides the built-in receiver URL.</td></tr><tr><td><code>transactionType</code></td><td><code>&quot;CustomerPayBillOnline&quot; | &quot;CustomerBuyGoodsOnline&quot;</code></td><td>PayBill or Buy Goods. Must match the shortcode type. Defaults to <code>&quot;CustomerPayBillOnline&quot;</code>.</td></tr></tbody></table></div>
+<h2 id="stk-push-and-wait">stk_push_and_wait<a class="anchor" href="#stk-push-and-wait" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>waits for callback</code></p>
+<p>Send an M-Pesa payment prompt and wait for the customer to accept or decline. Returns the settled outcome including the receipt number on success. Use this when you need to know whether the payment actually completed.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Customer phone number. Accepts 07..., +2547..., or 2547... and is normalised.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES. Whole numbers only.</td></tr><tr><td><code>accountReference</code></td><td><code>string</code></td><td>Account identifier shown on the customer statement. Max 12 characters.</td></tr><tr><td><code>transactionDesc</code></td><td><code>string</code></td><td>Short description. Max 13 characters.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td>Overrides DARAJA_SHORTCODE.</td></tr><tr><td><code>callbackUrl</code></td><td><code>string</code></td><td>Overrides the built-in receiver URL.</td></tr><tr><td><code>transactionType</code></td><td><code>&quot;CustomerPayBillOnline&quot; | &quot;CustomerBuyGoodsOnline&quot;</code></td><td>PayBill or Buy Goods. Must match the shortcode type. Defaults to <code>&quot;CustomerPayBillOnline&quot;</code>.</td></tr><tr><td><code>timeoutSeconds</code></td><td><code>number</code></td><td>How long to wait for the customer. Prompts expire after about 60 seconds. Defaults to <code>90</code>.</td></tr></tbody></table></div>
+<h2 id="stk-query">stk_query<a class="anchor" href="#stk-query" aria-label="Link to this section">#</a></h2>
+<p><code>control</code></p>
+<p>Query the status of a previous STK push using its CheckoutRequestID.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>checkoutRequestId</code> <strong>required</strong></td><td><code>string</code></td><td>The CheckoutRequestID returned by stk_push.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<h2 id="ratiba-create">ratiba_create<a class="anchor" href="#ratiba-create" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>gated in production</code></p>
+<p>Create an M-Pesa Ratiba standing order for recurring collection: subscriptions, loan repayments, insurance premiums, SACCO contributions. The customer approves via an M-Pesa prompt. The standing order name must be unique per customer.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>standingOrderName</code> <strong>required</strong></td><td><code>string</code></td><td>Name of the standing order. Must be unique for this customer; a repeat name is rejected.</td></tr><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Customer phone number. Accepts 07..., +2547..., or 2547... and is normalised.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES. Whole numbers only.</td></tr><tr><td><code>startDate</code> <strong>required</strong></td><td><code>string</code></td><td>First execution date, yyyymmdd or yyyy-mm-dd.</td></tr><tr><td><code>endDate</code> <strong>required</strong></td><td><code>string</code></td><td>Final execution date, yyyymmdd or yyyy-mm-dd.</td></tr><tr><td><code>frequency</code> <strong>required</strong></td><td><code>&quot;one-off&quot; | &quot;daily&quot; | &quot;weekly&quot; | &quot;bi-weekly&quot; | &quot;monthly&quot; | &quot;bi-monthly&quot; | &quot;quarterly&quot; | &quot;half-yearly&quot; | &quot;yearly&quot;</code></td><td>How often the standing order executes.</td></tr><tr><td><code>receiverType</code></td><td><code>&quot;paybill&quot; | &quot;till&quot;</code></td><td>Whether the shortcode is a PayBill or a Buy Goods till. Defaults to <code>&quot;paybill&quot;</code>.</td></tr><tr><td><code>accountReference</code></td><td><code>string</code></td><td></td></tr><tr><td><code>transactionDesc</code></td><td><code>string</code></td><td></td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>callbackUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="ratiba-create-and-wait">ratiba_create_and_wait<a class="anchor" href="#ratiba-create-and-wait" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>waits for callback</code> <code>gated in production</code></p>
+<p>Create an M-Pesa Ratiba standing order and wait for the customer to approve it. Returns the settled outcome including the reminder schedule id.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>standingOrderName</code> <strong>required</strong></td><td><code>string</code></td><td>Name of the standing order. Must be unique for this customer; a repeat name is rejected.</td></tr><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Customer phone number. Accepts 07..., +2547..., or 2547... and is normalised.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES. Whole numbers only.</td></tr><tr><td><code>startDate</code> <strong>required</strong></td><td><code>string</code></td><td>First execution date, yyyymmdd or yyyy-mm-dd.</td></tr><tr><td><code>endDate</code> <strong>required</strong></td><td><code>string</code></td><td>Final execution date, yyyymmdd or yyyy-mm-dd.</td></tr><tr><td><code>frequency</code> <strong>required</strong></td><td><code>&quot;one-off&quot; | &quot;daily&quot; | &quot;weekly&quot; | &quot;bi-weekly&quot; | &quot;monthly&quot; | &quot;bi-monthly&quot; | &quot;quarterly&quot; | &quot;half-yearly&quot; | &quot;yearly&quot;</code></td><td>How often the standing order executes.</td></tr><tr><td><code>receiverType</code></td><td><code>&quot;paybill&quot; | &quot;till&quot;</code></td><td>Whether the shortcode is a PayBill or a Buy Goods till. Defaults to <code>&quot;paybill&quot;</code>.</td></tr><tr><td><code>accountReference</code></td><td><code>string</code></td><td></td></tr><tr><td><code>transactionDesc</code></td><td><code>string</code></td><td></td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>callbackUrl</code></td><td><code>string</code></td><td></td></tr><tr><td><code>timeoutSeconds</code></td><td><code>number</code></td><td>Defaults to <code>90</code>.</td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="generate-qr">generate_qr<a class="anchor" href="#generate-qr" aria-label="Link to this section">#</a></h2>
+<p><code>money</code></p>
+<p>Generate a dynamic M-Pesa QR code for a specific amount and till or paybill.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>merchantName</code> <strong>required</strong></td><td><code>string</code></td><td>Name shown to the customer scanning the code.</td></tr><tr><td><code>refNo</code> <strong>required</strong></td><td><code>string</code></td><td>Your reference for the transaction.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES. Whole numbers only.</td></tr><tr><td><code>trxCode</code> <strong>required</strong></td><td><code>&quot;BG&quot; | &quot;WA&quot; | &quot;PB&quot; | &quot;SM&quot; | &quot;SB&quot;</code></td><td>BG buy goods, WA withdraw agent, PB paybill, SM send money, SB send to business.</td></tr><tr><td><code>cpi</code> <strong>required</strong></td><td><code>string</code></td><td>Till, paybill, or phone number the payment goes to.</td></tr><tr><td><code>size</code></td><td><code>string</code></td><td>QR image size in pixels. Defaults to <code>&quot;300&quot;</code>.</td></tr></tbody></table></div>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/tools/"><span>Previous</span><strong>All tools</strong></a><a class="next" href="/daraja-mcp/tools-disbursement/"><span>Next</span><strong>Disbursement</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#stk-push">stk_push</a></li><li class="lvl-2"><a href="#stk-push-and-wait">stk_push_and_wait</a></li><li class="lvl-2"><a href="#stk-query">stk_query</a></li><li class="lvl-2"><a href="#ratiba-create">ratiba_create</a></li><li class="lvl-2"><a href="#ratiba-create-and-wait">ratiba_create_and_wait</a></li><li class="lvl-2"><a href="#generate-qr">generate_qr</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

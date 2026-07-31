@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>The simulator — daraja-mcp</title>
+<meta name="description" content="A local fake Daraja with deterministic failure scenarios, so you can test without a Safaricom account.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/simulator/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/simulator.md" title="Markdown version">
+<meta property="og:title" content="The simulator — daraja-mcp">
+<meta property="og:description" content="A local fake Daraja with deterministic failure scenarios, so you can test without a Safaricom account.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/simulator/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="simulator">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/" aria-current="page">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/simulator.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/simulator.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="the-simulator">The simulator<a class="anchor" href="#the-simulator" aria-label="Link to this section">#</a></h1>
+<p>With no credentials set, <code>npx daraja-mcp</code> starts a local fake Daraja and points the client at it. Every tool works. No Safaricom account, no sandbox app, no public callback URL.</p>
+<p>This exists because Daraja normally cannot be tried at all until you have registered, created an app, selected products, and exposed an HTTPS endpoint to the internet. That is a lot of setup to answer &quot;is this library any good&quot;.</p>
+<h2 id="what-it-actually-does">What it actually does<a class="anchor" href="#what-it-actually-does" aria-label="Link to this section">#</a></h2>
+<p>It is not a stub that returns <code>{ ok: true }</code>. It speaks the real endpoint paths, returns the documented payload shapes, and pushes callbacks the way Safaricom does, with the same delay between the acknowledgement and the result.</p>
+<p>It also preserves Daraja's inconsistencies rather than tidying them up. Ratiba still changes its envelope casing between response and callback. Dynamic QR still returns <code>&quot;00&quot;</code> rather than <code>&quot;0&quot;</code>. Failed STK callbacks still omit <code>CallbackMetadata</code> entirely. Code written against a clean mock passes its tests and then fails against the real thing.</p>
+<h2 id="failure-scenarios-are-keyed-off-the-amount">Failure scenarios are keyed off the amount<a class="anchor" href="#failure-scenarios-are-keyed-off-the-amount" aria-label="Link to this section">#</a></h2>
+<p>Every branch is reachable deterministically. Ask for a particular amount and you get a particular outcome:</p>
+<div class="table-wrap"><table><thead><tr><th>Amount</th><th>Outcome</th></tr></thead><tbody><tr><td>Anything else</td><td>Success, with a receipt number</td></tr><tr><td><code>1</code></td><td>Insufficient funds</td></tr><tr><td><code>1032</code></td><td>Cancelled by user</td></tr><tr><td><code>1037</code></td><td>Timeout, customer unreachable</td></tr><tr><td><code>2001</code></td><td>Wrong PIN</td></tr><tr><td><code>9999</code></td><td>Upstream 500, to exercise retry handling</td></tr></tbody></table></div>
+<p>Try it. Ask your agent:</p>
+<blockquote><p>Send an M-Pesa request for 1032 shillings to 0712345678 and wait for the result.</p></blockquote>
+<p>You get a failure with <code>ResultCode 1032</code> and <code>metadata: null</code>. That null is the point: real Daraja omits the metadata block on failed payments, so code that reads the receipt number unconditionally crashes on the first declined payment. Better to meet that here.</p>
+<h2 id="testing-your-own-integration">Testing your own integration<a class="anchor" href="#testing-your-own-integration" aria-label="Link to this section">#</a></h2>
+<p>The simulator is exported, so your test suite can use it directly without going through MCP:</p>
+<figure class="code"><figcaption><span class="code-lang">ts</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>import { DarajaSimulator, DarajaClient, loadConfig } from 'daraja-mcp';
+
+const sim = new DarajaSimulator({ callbackDelayMs: 5 });
+const baseUrl = await sim.start();
+
+const client = new DarajaClient(
+  loadConfig({
+    DARAJA_MODE: 'sandbox',
+    DARAJA_CONSUMER_KEY: 'test',
+    DARAJA_CONSUMER_SECRET: 'test',
+    DARAJA_BASE_URL: baseUrl,
+  }),
+);
+
+// ... exercise your code against it ...
+
+await sim.stop();</code></pre></figure>
+<p><code>callbackDelayMs</code> controls how long the simulator waits before delivering a result. Set it low in tests. <code>sim.flushCallbacks()</code> fires every queued callback immediately, which removes timing flakiness entirely.</p>
+<p>This is how this project's own 538 tests run, which is why they need no credentials and no network.</p>
+<h2 id="what-it-does-not-do">What it does not do<a class="anchor" href="#what-it-does-not-do" aria-label="Link to this section">#</a></h2>
+<p>It does not validate credentials beyond checking that a bearer token is present, does not enforce Daraja's rate limits, and does not model the commercial rules around Ratiba or the shortcode provisioning process.</p>
+<p>It also cannot tell you whether your production shortcode is configured correctly. For that you need <a href="/daraja-mcp/sandbox/">the real sandbox</a>, which is the sensible next step once the shape of your integration is settled.</p>
+<h2 id="moving-off-it">Moving off it<a class="anchor" href="#moving-off-it" aria-label="Link to this section">#</a></h2>
+<p>Set credentials and the server switches to sandbox automatically:</p>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>export DARAJA_CONSUMER_KEY=your-key
+export DARAJA_CONSUMER_SECRET=your-secret</code></pre></figure>
+<p><code>server_health</code> reports which mode you are in. Every tool response says so too, in the leading line and in an <code>environment</code> field, so there is never a question of whether a payment was real.</p>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/clients/"><span>Previous</span><strong>Install per client</strong></a><a class="next" href="/daraja-mcp/tools/"><span>Next</span><strong>All tools</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#what-it-actually-does">What it actually does</a></li><li class="lvl-2"><a href="#failure-scenarios-are-keyed-off-the-amount">Failure scenarios are keyed off the amount</a></li><li class="lvl-2"><a href="#testing-your-own-integration">Testing your own integration</a></li><li class="lvl-2"><a href="#what-it-does-not-do">What it does not do</a></li><li class="lvl-2"><a href="#moving-off-it">Moving off it</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

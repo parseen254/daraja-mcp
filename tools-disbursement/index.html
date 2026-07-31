@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Disbursement — daraja-mcp</title>
+<meta name="description" content="Disbursement and treasury: 8 tools.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/tools-disbursement/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/tools-disbursement.md" title="Markdown version">
+<meta property="og:title" content="Disbursement — daraja-mcp">
+<meta property="og:description" content="Disbursement and treasury: 8 tools.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/tools-disbursement/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="tools-disbursement">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/" aria-current="page">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/tools-disbursement.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/tools-disbursement.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="disbursement-and-treasury">Disbursement and treasury<a class="anchor" href="#disbursement-and-treasury" aria-label="Link to this section">#</a></h1>
+<p>Moving money out, and the treasury operations around it. Nothing here asks a human to approve anything, which is why most of it is disabled in production until you opt in.</p>
+<h2 id="b2c-payment">b2c_payment<a class="anchor" href="#b2c-payment" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>gated in production</code></p>
+<p>Pay money out to a customer: refunds, withdrawals, salaries, promotional winnings. Asynchronous; the result arrives on a callback.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Recipient phone number.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES, whole numbers only.</td></tr><tr><td><code>commandId</code></td><td><code>&quot;BusinessPayment&quot; | &quot;SalaryPayment&quot; | &quot;PromotionPayment&quot;</code></td><td>BusinessPayment for general payouts, SalaryPayment for salaries (allows unregistered recipients), PromotionPayment for winnings. Defaults to <code>&quot;BusinessPayment&quot;</code>.</td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Payment&quot;</code>.</td></tr><tr><td><code>occasion</code></td><td><code>string</code></td><td></td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="b2c-payment-and-wait">b2c_payment_and_wait<a class="anchor" href="#b2c-payment-and-wait" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>waits for callback</code> <code>gated in production</code></p>
+<p>Pay money out to a customer and wait for the result callback, returning the receipt number on success.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Recipient phone number.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES, whole numbers only.</td></tr><tr><td><code>commandId</code></td><td><code>&quot;BusinessPayment&quot; | &quot;SalaryPayment&quot; | &quot;PromotionPayment&quot;</code></td><td>BusinessPayment for general payouts, SalaryPayment for salaries (allows unregistered recipients), PromotionPayment for winnings. Defaults to <code>&quot;BusinessPayment&quot;</code>.</td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Payment&quot;</code>.</td></tr><tr><td><code>occasion</code></td><td><code>string</code></td><td></td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr><tr><td><code>timeoutSeconds</code></td><td><code>number</code></td><td>Defaults to <code>120</code>.</td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="b2b-payment">b2b_payment<a class="anchor" href="#b2b-payment" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>gated in production</code></p>
+<p>Pay another business: a PayBill, a Buy Goods till, or a B2C working account top-up.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>target</code> <strong>required</strong></td><td><code>&quot;paybill&quot; | &quot;buygoods&quot; | &quot;topup&quot;</code></td><td>paybill pays a PayBill, buygoods pays a till, topup funds a B2C working account.</td></tr><tr><td><code>receiverShortCode</code> <strong>required</strong></td><td><code>string</code></td><td>Shortcode being paid.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES, whole numbers only.</td></tr><tr><td><code>accountReference</code></td><td><code>string</code></td><td>Required for paybill. Ignored for buy goods.</td></tr><tr><td><code>requester</code></td><td><code>string</code></td><td>Optional phone number of the person on whose behalf you are paying.</td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Payment&quot;</code>.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="tax-remittance">tax_remittance<a class="anchor" href="#tax-remittance" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>gated in production</code></p>
+<p>Remit tax to the Kenya Revenue Authority using a Payment Registration Number.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES, whole numbers only.</td></tr><tr><td><code>paymentRegistrationNumber</code> <strong>required</strong></td><td><code>string</code></td><td>KRA Payment Registration Number (PRN) for the tax being paid.</td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Tax payment&quot;</code>.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="business-to-pochi">business_to_pochi<a class="anchor" href="#business-to-pochi" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>gated in production</code></p>
+<p>Pay a Pochi la Biashara number.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>phoneNumber</code> <strong>required</strong></td><td><code>string</code></td><td>Pochi la Biashara number receiving the payment.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES, whole numbers only.</td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Payment&quot;</code>.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<h2 id="account-balance">account_balance<a class="anchor" href="#account-balance" aria-label="Link to this section">#</a></h2>
+<p><code>control</code></p>
+<p>Query the balance of your M-Pesa business account. Asynchronous; the balance arrives on a callback as a pipe-delimited string per account type.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Balance query&quot;</code>.</td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<h2 id="transaction-status">transaction_status<a class="anchor" href="#transaction-status" aria-label="Link to this section">#</a></h2>
+<p><code>control</code></p>
+<p>Check the status of any past transaction by receipt number, or by conversation id when the original request timed out. Use this before retrying a payment you are unsure about.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>transactionId</code></td><td><code>string</code></td><td>M-Pesa receipt number, for example NEF61H8J60.</td></tr><tr><td><code>originalConversationId</code></td><td><code>string</code></td><td>Use when you never received a receipt number.</td></tr><tr><td><code>shortCode</code></td><td><code>string</code></td><td></td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Status query&quot;</code>.</td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<h2 id="reversal">reversal<a class="anchor" href="#reversal" aria-label="Link to this section">#</a></h2>
+<p><code>money</code> <code>gated in production</code></p>
+<p>Reverse a transaction that was paid into your shortcode.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td><code>transactionId</code> <strong>required</strong></td><td><code>string</code></td><td>M-Pesa receipt number of the transaction to reverse.</td></tr><tr><td><code>amount</code> <strong>required</strong></td><td><code>number</code></td><td>Amount in KES, whole numbers only.</td></tr><tr><td><code>receiverShortCode</code></td><td><code>string</code></td><td>Shortcode that received the money.</td></tr><tr><td><code>remarks</code></td><td><code>string</code></td><td>Defaults to <code>&quot;Reversal&quot;</code>.</td></tr><tr><td><code>resultUrl</code></td><td><code>string</code></td><td></td></tr></tbody></table></div>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p>This tool moves money outward and is disabled in production unless <code>DARAJA_ALLOW_PAYOUTS=true</code> is set. Nobody approves anything on a phone for this one, so whatever calls it needs its own authorisation step.</p></aside>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/tools-payments/"><span>Previous</span><strong>Payments</strong></a><a class="next" href="/daraja-mcp/tools-identity/"><span>Next</span><strong>Identity and fraud</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#b2c-payment">b2c_payment</a></li><li class="lvl-2"><a href="#b2c-payment-and-wait">b2c_payment_and_wait</a></li><li class="lvl-2"><a href="#b2b-payment">b2b_payment</a></li><li class="lvl-2"><a href="#tax-remittance">tax_remittance</a></li><li class="lvl-2"><a href="#business-to-pochi">business_to_pochi</a></li><li class="lvl-2"><a href="#account-balance">account_balance</a></li><li class="lvl-2"><a href="#transaction-status">transaction_status</a></li><li class="lvl-2"><a href="#reversal">reversal</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

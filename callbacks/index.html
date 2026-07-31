@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Callbacks and waiting — daraja-mcp</title>
+<meta name="description" content="Why a payment result arrives later, how the *_and_wait tools handle it, and what happens when it never comes.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/callbacks/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/callbacks.md" title="Markdown version">
+<meta property="og:title" content="Callbacks and waiting — daraja-mcp">
+<meta property="og:description" content="Why a payment result arrives later, how the *_and_wait tools handle it, and what happens when it never comes.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/callbacks/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="callbacks">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/" aria-current="page">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/callbacks.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/callbacks.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="callbacks-and-waiting">Callbacks and waiting<a class="anchor" href="#callbacks-and-waiting" aria-label="Link to this section">#</a></h1>
+<p>Daraja is asynchronous in a way that catches people out. This page explains the model, then what this server does about it.</p>
+<h2 id="the-shape-of-the-problem">The shape of the problem<a class="anchor" href="#the-shape-of-the-problem" aria-label="Link to this section">#</a></h2>
+<p>You call <code>stk_push</code>. Daraja responds in a second or so:</p>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;MerchantRequestID&quot;: &quot;29115-34620561-1&quot;,
+  &quot;CheckoutRequestID&quot;: &quot;ws_CO_191220191020363925&quot;,
+  &quot;ResponseCode&quot;: &quot;0&quot;,
+  &quot;ResponseDescription&quot;: &quot;Success. Request accepted for processing&quot;,
+  &quot;CustomerMessage&quot;: &quot;Success. Request accepted for processing&quot;
+}</code></pre></figure>
+<p>Nothing there says a payment happened. <code>ResponseCode: &quot;0&quot;</code> means Daraja accepted the request. A prompt is now on the customer's phone and they have about a minute to enter their PIN, decline, or ignore it. Whatever they do arrives later as an HTTP POST to a URL you nominated.</p>
+<p>For an agent this is awkward. The tool returned, the model saw success, and it will happily tell the user the payment went through. It has no idea.</p>
+<h2 id="what-the-waiting-tools-do">What the waiting tools do<a class="anchor" href="#what-the-waiting-tools-do" aria-label="Link to this section">#</a></h2>
+<p><code>stk_push_and_wait</code> sends the push, then blocks until the callback for that <code>CheckoutRequestID</code> arrives, and returns the settled outcome:</p>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;environment&quot;: &quot;simulator&quot;,
+  &quot;status&quot;: &quot;success&quot;,
+  &quot;checkoutRequestId&quot;: &quot;ws_CO_895779657909821&quot;,
+  &quot;resultCode&quot;: &quot;0&quot;,
+  &quot;resultDesc&quot;: &quot;The service request is processed successfully.&quot;,
+  &quot;metadata&quot;: {
+    &quot;Amount&quot;: 100,
+    &quot;MpesaReceiptNumber&quot;: &quot;XZAWA9JEBX&quot;,
+    &quot;TransactionDate&quot;: 20260731121937,
+    &quot;PhoneNumber&quot;: 254712345678
+  }
+}</code></pre></figure>
+<p><code>MpesaReceiptNumber</code> is proof. There is an equivalent for payouts (<code>b2c_payment_and_wait</code>) and standing orders (<code>ratiba_create_and_wait</code>).</p>
+<h2 id="when-the-customer-declines">When the customer declines<a class="anchor" href="#when-the-customer-declines" aria-label="Link to this section">#</a></h2>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;environment&quot;: &quot;simulator&quot;,
+  &quot;status&quot;: &quot;failure&quot;,
+  &quot;checkoutRequestId&quot;: &quot;ws_CO_...&quot;,
+  &quot;resultCode&quot;: &quot;1032&quot;,
+  &quot;resultDesc&quot;: &quot;Request cancelled by user&quot;,
+  &quot;metadata&quot;: null
+}</code></pre></figure>
+<p><code>metadata</code> is <code>null</code> because Daraja omits <code>CallbackMetadata</code> entirely on failure. A cancellation is a normal outcome, not a fault: the customer looked at the prompt and said no.</p>
+<h2 id="when-nothing-arrives">When nothing arrives<a class="anchor" href="#when-nothing-arrives" aria-label="Link to this section">#</a></h2>
+<figure class="code"><figcaption><span class="code-lang">json</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>{
+  &quot;environment&quot;: &quot;sandbox&quot;,
+  &quot;status&quot;: &quot;pending&quot;,
+  &quot;checkoutRequestId&quot;: &quot;ws_CO_...&quot;,
+  &quot;message&quot;: &quot;No callback arrived before the timeout. The payment may still complete. Query it with stk_query or check get_callback using this CheckoutRequestID.&quot;
+}</code></pre></figure>
+<aside class="callout callout-warning" role="note"><p class="callout-title">Warning</p><p><code>pending</code> is not <code>failure</code>. The payment may well have succeeded and the callback got lost. Never resend on a timeout without checking: <code>transaction_status</code> tells you what actually happened. Resending an STK push to a customer who already paid is how you double-charge someone.</p></aside>
+<h2 id="waits-are-bound-to-the-amount">Waits are bound to the amount<a class="anchor" href="#waits-are-bound-to-the-amount" aria-label="Link to this section">#</a></h2>
+<p>A callback's correlation id comes out of its own body, so quoting the right id only proves the sender knew it. Each wait is therefore bound to the amount that was requested.</p>
+<p>If you asked for KES 100 and a callback claims KES 999,999 against the same id, the wait stays open and the mismatch is counted. The callback is still stored, because hiding it would hide the discrepancy from whoever investigates later.</p>
+<p>Callbacks that report no amount, which is normal on failure, still settle the wait. You need to hear that a payment failed.</p>
+<h2 id="running-the-receiver">Running the receiver<a class="anchor" href="#running-the-receiver" aria-label="Link to this section">#</a></h2>
+<p>The server starts a callback receiver on port <code>8787</code> by default and generates callback URLs pointing at it. In simulator mode this all happens on loopback and needs no setup.</p>
+<p>Against real Daraja, Safaricom must be able to reach you over public HTTPS:</p>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>ngrok http 8787
+export DARAJA_CALLBACK_PUBLIC_URL=https://your-tunnel.ngrok.io</code></pre></figure>
+<p>Behind a tunnel or load balancer, also set <code>DARAJA_TRUST_PROXY=1</code> so the receiver reads the forwarded address rather than the proxy's. Do not set it if you are exposed directly: see the <a href="/daraja-mcp/security/">security model</a> for why.</p>
+<p>If your host forbids listening sockets, <code>DARAJA_DISABLE_RECEIVER=1</code> turns it off. You lose the <code>*_and_wait</code> tools and must supply your own callback URLs.</p>
+<h2 id="callbacks-are-stored">Callbacks are stored<a class="anchor" href="#callbacks-are-stored" aria-label="Link to this section">#</a></h2>
+<p>Every callback is appended to a JSON Lines file under <code>DARAJA_CALLBACK_STORE_DIR</code>, reloaded on restart. A crash does not lose the record of a payment that already settled. Back that directory up alongside your database.</p>
+<p>Two tools read it. <code>list_callbacks</code> gives a summary, newest first. <code>get_callback</code> returns the full payload for one correlation id.</p>
+<aside class="callout callout-note" role="note"><p class="callout-title">Note</p><p>Text inside a callback is partly written by the paying customer. Both tools sanitise it and label it as customer-supplied. Read the <a href="/daraja-mcp/security/">security model</a> before feeding callback contents back into anything that can act.</p></aside>
+<h2 id="reconciling-after-an-outage">Reconciling after an outage<a class="anchor" href="#reconciling-after-an-outage" aria-label="Link to this section">#</a></h2>
+<p>Callbacks get lost: tunnels drop, processes restart mid-delivery, retry budgets run out. Two tools help.</p>
+<p><code>transaction_status</code> looks up a single transaction by receipt number, or by conversation id when the original request timed out before returning one.</p>
+<p><code>pull_transactions</code> fetches C2B transactions for a time window, which is how you backfill what you missed. It needs <code>pull_register</code> run once for the shortcode first.</p>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/tools-c2b/"><span>Previous</span><strong>C2B and diagnostics</strong></a><a class="next" href="/daraja-mcp/quirks/"><span>Next</span><strong>Daraja's inconsistencies</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#the-shape-of-the-problem">The shape of the problem</a></li><li class="lvl-2"><a href="#what-the-waiting-tools-do">What the waiting tools do</a></li><li class="lvl-2"><a href="#when-the-customer-declines">When the customer declines</a></li><li class="lvl-2"><a href="#when-nothing-arrives">When nothing arrives</a></li><li class="lvl-2"><a href="#waits-are-bound-to-the-amount">Waits are bound to the amount</a></li><li class="lvl-2"><a href="#running-the-receiver">Running the receiver</a></li><li class="lvl-2"><a href="#callbacks-are-stored">Callbacks are stored</a></li><li class="lvl-2"><a href="#reconciling-after-an-outage">Reconciling after an outage</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

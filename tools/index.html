@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>All tools — daraja-mcp</title>
+<meta name="description" content="All 25 tools, grouped by what they do.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/tools/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/tools.md" title="Markdown version">
+<meta property="og:title" content="All tools — daraja-mcp">
+<meta property="og:description" content="All 25 tools, grouped by what they do.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/tools/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="tools">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/" aria-current="page">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/tools.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/tools.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="all-tools">All tools<a class="anchor" href="#all-tools" aria-label="Link to this section">#</a></h1>
+<p>25 tools covering the Daraja 3.0 product surface. Every one runs against the simulator with no Safaricom account, so you can try any of them before deciding whether the shape fits.</p>
+<h2 id="find-one-by-task">Find one by task<a class="anchor" href="#find-one-by-task" aria-label="Link to this section">#</a></h2>
+<div class="table-wrap"><table><thead><tr><th>I want to</th><th>Use</th></tr></thead><tbody><tr><td>Charge a customer and know whether it worked</td><td><code>stk_push_and_wait</code></td></tr><tr><td>Charge a customer without waiting</td><td><code>stk_push</code></td></tr><tr><td>Set up a recurring collection</td><td><code>ratiba_create_and_wait</code></td></tr><tr><td>Pay someone out</td><td><code>b2c_payment_and_wait</code></td></tr><tr><td>Pay another business</td><td><code>b2b_payment</code></td></tr><tr><td>Check whether a past payment succeeded</td><td><code>transaction_status</code></td></tr><tr><td>See what a callback actually contained</td><td><code>get_callback</code></td></tr><tr><td>Check a number for SIM-swap fraud before paying it</td><td><code>check_sim_swap</code></td></tr><tr><td>Confirm which business owns a shortcode</td><td><code>query_org_info</code></td></tr><tr><td>Work out why nothing is happening</td><td><code>server_health</code></td></tr></tbody></table></div>
+<h2 id="groups">Groups<a class="anchor" href="#groups" aria-label="Link to this section">#</a></h2>
+<h3 id="payments">Payments<a class="anchor" href="#payments" aria-label="Link to this section">#</a></h3>
+<p>Collecting money from a customer. These are the flows where the customer approves a prompt on their own phone, so a person is always in the loop.</p>
+<p><code>stk_push</code> · <code>stk_push_and_wait</code> · <code>stk_query</code> · <code>ratiba_create</code> · <code>ratiba_create_and_wait</code> · <code>generate_qr</code></p>
+<p><a href="/daraja-mcp/tools-payments/">See all 6 in Payments</a></p>
+<h3 id="disbursement-and-treasury">Disbursement and treasury<a class="anchor" href="#disbursement-and-treasury" aria-label="Link to this section">#</a></h3>
+<p>Moving money out, and the treasury operations around it. Nothing here asks a human to approve anything, which is why most of it is disabled in production until you opt in.</p>
+<p><code>b2c_payment</code> · <code>b2c_payment_and_wait</code> · <code>b2b_payment</code> · <code>tax_remittance</code> · <code>business_to_pochi</code> · <code>account_balance</code> · <code>transaction_status</code> · <code>reversal</code></p>
+<p><a href="/daraja-mcp/tools-disbursement/">See all 8 in Disbursement and treasury</a></p>
+<h3 id="identity-and-fraud">Identity and fraud<a class="anchor" href="#identity-and-fraud" aria-label="Link to this section">#</a></h3>
+<p>New in Daraja 3.0. Cheap checks worth running before you send money to a number you have not paid before.</p>
+<p><code>check_sim_swap</code> · <code>check_age_on_network</code> · <code>validate_identity</code> · <code>query_org_info</code></p>
+<p><a href="/daraja-mcp/tools-identity/">See all 4 in Identity and fraud</a></p>
+<h3 id="c2b-and-diagnostics">C2B and diagnostics<a class="anchor" href="#c2b-and-diagnostics" aria-label="Link to this section">#</a></h3>
+<p>Receiving payments customers start themselves, and the tools for seeing what actually arrived.</p>
+<p><code>c2b_register_urls</code> · <code>c2b_simulate</code> · <code>pull_register</code> · <code>pull_transactions</code> · <code>list_callbacks</code> · <code>get_callback</code> · <code>server_health</code></p>
+<p><a href="/daraja-mcp/tools-c2b/">See all 7 in C2B and diagnostics</a></p>
+<h2 id="reading-an-entry">Reading an entry<a class="anchor" href="#reading-an-entry" aria-label="Link to this section">#</a></h2>
+<p>Each tool carries a few labels. <code>money</code> means it moves or reports money; <code>control</code> means it configures or inspects. <code>waits for callback</code> means it blocks until Daraja reports the settled outcome, rather than returning an acknowledgement. <code>gated in production</code> means it is disabled unless you opt in, because it moves money outward with no human approving anything.</p>
+<p>Every tool response also states the environment it ran against, so neither you nor the model has to guess whether real money moved.</p>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/simulator/"><span>Previous</span><strong>The simulator</strong></a><a class="next" href="/daraja-mcp/tools-payments/"><span>Next</span><strong>Payments</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#find-one-by-task">Find one by task</a></li><li class="lvl-2"><a href="#groups">Groups</a></li><li class="lvl-3"><a href="#payments">Payments</a></li><li class="lvl-3"><a href="#disbursement-and-treasury">Disbursement and treasury</a></li><li class="lvl-3"><a href="#identity-and-fraud">Identity and fraud</a></li><li class="lvl-3"><a href="#c2b-and-diagnostics">C2B and diagnostics</a></li><li class="lvl-2"><a href="#reading-an-entry">Reading an entry</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

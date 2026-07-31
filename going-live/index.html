@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Going live — daraja-mcp</title>
+<meta name="description" content="Production checklist: credentials, callback security, reconciliation.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/going-live/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/going-live.md" title="Markdown version">
+<meta property="og:title" content="Going live — daraja-mcp">
+<meta property="og:description" content="Production checklist: credentials, callback security, reconciliation.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/going-live/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="going-live">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/" aria-current="page">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/going-live.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/going-live.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="going-live">Going live<a class="anchor" href="#going-live" aria-label="Link to this section">#</a></h1>
+<p>Production means real money and irreversible mistakes. Read this before switching <code>DARAJA_MODE</code>.</p>
+<h2 id="before-you-switch">Before you switch<a class="anchor" href="#before-you-switch" aria-label="Link to this section">#</a></h2>
+<p><strong>Get production credentials.</strong> In the Daraja portal, take your app through Go Live. You get a different consumer key and secret, and your own shortcode. None of your sandbox values carry over.</p>
+<p><strong>Ratiba needs a contract.</strong> M-Pesa Ratiba is a commercial API. You email <code>apisupport@safaricom.co.ke</code>, Safaricom's commercial team discusses terms, you sign, and only then is it enabled on your shortcode. Pricing at time of writing is 5% of transaction value capped at KES 5 per standing order executed, exclusive of VAT, on top of the normal C2B tariff.</p>
+<p><strong>Generate your own security credential.</strong> The portal gives you a pre-encrypted initiator password. It works, and it silently stops working when Safaricom rotates the certificate. Generating it locally makes rotation a config change:</p>
+<figure class="code"><figcaption><span class="code-lang">ts</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>import { encryptSecurityCredential } from 'daraja-mcp';
+import { readFileSync } from 'node:fs';
+
+const cert = readFileSync('./ProductionCertificate.cer', 'utf8');
+console.log(encryptSecurityCredential('your-initiator-password', cert));</code></pre></figure>
+<p>The certificate is on the portal under the API docs. Note that Safaricom's cert uses PKCS#1 v1.5 padding, not OAEP.</p>
+<h2 id="callback-security">Callback security<a class="anchor" href="#callback-security" aria-label="Link to this section">#</a></h2>
+<p>This is the part that actually matters.</p>
+<p>Daraja callbacks are unsigned HTTP POSTs that change payment state. There is no HMAC, no shared secret in the body, nothing to verify. If your callback URL is reachable and unprotected, anyone who guesses it can tell your system a payment succeeded when no money moved.</p>
+<p>Three controls, all on by default in production:</p>
+<p><strong>Source verification.</strong> Only Safaricom's published egress ranges are accepted. The server will not start in production with <code>DARAJA_CALLBACK_ALLOW_ANY_IP</code> set. If Safaricom adds ranges, override with <code>DARAJA_CALLBACK_CIDRS</code>.</p>
+<p><strong>Path secret.</strong> Set <code>DARAJA_CALLBACK_PATH_SECRET</code> to a long random string. Callback URLs become <code>/cb/&lt;secret&gt;/stk</code>, so the endpoint is unguessable even if someone learns your hostname. Compared in constant time.</p>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>export DARAJA_CALLBACK_PATH_SECRET=$(openssl rand -hex 32)</code></pre></figure>
+<p><strong>Proxy trust.</strong> The server reads <code>X-Forwarded-For</code> only when it is behind a proxy you have told it to trust. If you terminate TLS yourself with nothing in front, that header is attacker-controlled and must not be trusted.</p>
+<h2 id="reconciliation">Reconciliation<a class="anchor" href="#reconciliation" aria-label="Link to this section">#</a></h2>
+<p>Callbacks get lost. The tunnel drops, your process restarts mid-delivery, Safaricom's retry budget runs out. Do not treat a missing callback as a failed payment.</p>
+<p><strong>Callbacks are stored on disk.</strong> Append-only JSON Lines at <code>DARAJA_CALLBACK_STORE_DIR</code>, reloaded on restart, so a crash does not lose the record of a settled payment. Back this up alongside your database.</p>
+<p><strong>Query before retrying.</strong> If a payment's outcome is unknown, call <code>transaction_status</code> rather than resending. Resending an STK push to a customer who already paid is how you double-charge someone.</p>
+<p><strong>Backfill with pull transactions.</strong> After an outage, <code>pull_transactions</code> fetches C2B transactions for a window so you can reconcile what you missed.</p>
+<p><strong>Watch for the two code spaces.</strong> A synchronous <code>ResponseCode</code> of <code>0</code> means &quot;accepted for processing&quot;, not &quot;paid&quot;. The callback's <code>ResultCode</code> of <code>0</code> means paid. Conflating them means marking orders paid that never were. Ratiba makes this worse by using <code>200</code> for sync success and <code>0</code> for callback success.</p>
+<h2 id="operational-checklist">Operational checklist<a class="anchor" href="#operational-checklist" aria-label="Link to this section">#</a></h2>
+<ul><li>[ ] Production credentials, separate from sandbox</li><li>[ ] <code>DARAJA_MODE=production</code></li><li>[ ] <code>DARAJA_CALLBACK_PUBLIC_URL</code> on stable public HTTPS, not a dev tunnel</li><li>[ ] <code>DARAJA_CALLBACK_PATH_SECRET</code> set to a random value</li><li>[ ] Source verification left on</li><li>[ ] Callback store directory on persistent, backed-up disk</li><li>[ ] <code>server_health</code> checked after deploy</li><li>[ ] Ratiba commercial agreement signed, if you use it</li><li>[ ] Alerting on callbacks that never arrive for initiated payments</li></ul>
+<h2 id="what-this-server-does-not-do">What this server does not do<a class="anchor" href="#what-this-server-does-not-do" aria-label="Link to this section">#</a></h2>
+<p>It is a Daraja client, not a ledger. It does not decide whether a payment should happen, hold balances, or reconcile against your books. Those belong in your system, where the money lives.</p>
+<nav class="next-prev"><a class="prev" href="/daraja-mcp/sandbox/"><span>Previous</span><strong>The real sandbox</strong></a><a class="next" href="/daraja-mcp/troubleshooting/"><span>Next</span><strong>Troubleshooting</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#before-you-switch">Before you switch</a></li><li class="lvl-2"><a href="#callback-security">Callback security</a></li><li class="lvl-2"><a href="#reconciliation">Reconciliation</a></li><li class="lvl-2"><a href="#operational-checklist">Operational checklist</a></li><li class="lvl-2"><a href="#what-this-server-does-not-do">What this server does not do</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>

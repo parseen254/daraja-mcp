@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Troubleshooting — daraja-mcp</title>
+<meta name="description" content="The errors people actually hit, organised by what you see.">
+<link rel="canonical" href="https://parseen254.github.io/daraja-mcp/troubleshooting/">
+<link rel="alternate" type="text/markdown" href="/daraja-mcp/troubleshooting.md" title="Markdown version">
+<meta property="og:title" content="Troubleshooting — daraja-mcp">
+<meta property="og:description" content="The errors people actually hit, organised by what you see.">
+<meta property="og:url" content="https://parseen254.github.io/daraja-mcp/troubleshooting/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="stylesheet" href="/daraja-mcp/styles.css">
+<script>try{var t=localStorage.getItem('daraja-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body data-page="troubleshooting">
+<a class="skip" href="#content">Skip to content</a>
+<input type="checkbox" id="nav-toggle" class="nav-toggle" hidden>
+
+<header class="site-header">
+  <label class="hamburger" for="nav-toggle" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+  </label>
+  <a class="brand" href="/daraja-mcp/">daraja<span>-mcp</span></a>
+  <nav class="header-links">
+    <a href="/daraja-mcp/tools/">Tools</a>
+    <a href="https://github.com/parseen254/daraja-mcp">GitHub</a>
+    <a href="https://www.npmjs.com/package/daraja-mcp">npm</a>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch theme">◐</button>
+  </nav>
+</header>
+
+<label class="scrim" for="nav-toggle" hidden aria-hidden="true"></label>
+
+<div class="shell">
+  <nav class="sidebar" aria-label="Documentation">
+    <div class="sidebar-inner">
+<h2>Start here</h2><ul><li><a href="/daraja-mcp/">Overview</a></li><li><a href="/daraja-mcp/quickstart/">Quickstart</a></li><li><a href="/daraja-mcp/clients/">Install per client</a></li><li><a href="/daraja-mcp/simulator/">The simulator</a></li></ul>
+<h2>Reference</h2><ul><li><a href="/daraja-mcp/tools/">All tools</a></li><li><a href="/daraja-mcp/tools-payments/">Payments</a></li><li><a href="/daraja-mcp/tools-disbursement/">Disbursement</a></li><li><a href="/daraja-mcp/tools-identity/">Identity and fraud</a></li><li><a href="/daraja-mcp/tools-c2b/">C2B and diagnostics</a></li></ul>
+<h2>Concepts</h2><ul><li><a href="/daraja-mcp/callbacks/">Callbacks and waiting</a></li><li><a href="/daraja-mcp/quirks/">Daraja's inconsistencies</a></li><li><a href="/daraja-mcp/security/">Security model</a></li></ul>
+<h2>Going further</h2><ul><li><a href="/daraja-mcp/sandbox/">The real sandbox</a></li><li><a href="/daraja-mcp/going-live/">Going live</a></li><li><a href="/daraja-mcp/troubleshooting/" aria-current="page">Troubleshooting</a></li></ul>
+    </div>
+  </nav>
+
+  <main id="content">
+    <div class="page-actions">
+      <a href="/daraja-mcp/troubleshooting.md">View as Markdown</a>
+      <button type="button" data-copy-md="/daraja-mcp/troubleshooting.md">Copy as Markdown</button>
+      <a href="/daraja-mcp/llms.txt">llms.txt</a>
+    </div>
+<h1 id="troubleshooting">Troubleshooting<a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a></h1>
+<p>Start with <code>server_health</code>. It reports the mode, which credentials are present, and whether the callback receiver is running. Most problems are visible there.</p>
+<h2 id="invalid-access-token-404-001-03">&quot;Invalid Access Token&quot; (404.001.03)<a class="anchor" href="#invalid-access-token-404-001-03" aria-label="Link to this section">#</a></h2>
+<p>Rarely about the token.</p>
+<p><strong>Wrong environment.</strong> Sandbox credentials against production, or the reverse. The error is identical either way.</p>
+<p><strong>Product not enabled on the app.</strong> If you did not tick the product when creating your Daraja app, calls to it return this instead of a useful message. Ratiba in particular must be selected explicitly.</p>
+<p><strong>Not through Go Live.</strong> Sandbox credentials will not work against <code>api.safaricom.co.ke</code> no matter how correct they are.</p>
+<h2 id="stk-push-accepted-but-nothing-happens-on-the-phone">STK push accepted but nothing happens on the phone<a class="anchor" href="#stk-push-accepted-but-nothing-happens-on-the-phone" aria-label="Link to this section">#</a></h2>
+<p>The push was accepted by Daraja, not delivered to a handset.</p>
+<p>Check the number is on Safaricom and M-Pesa registered. Check the shortcode type matches <code>transactionType</code>: a PayBill shortcode with <code>CustomerBuyGoodsOnline</code> is accepted and then silently fails.</p>
+<p>In sandbox, use <code>254708374149</code>. Other numbers behave unpredictably.</p>
+<h2 id="stk-push-works-but-the-callback-never-arrives">STK push works but the callback never arrives<a class="anchor" href="#stk-push-works-but-the-callback-never-arrives" aria-label="Link to this section">#</a></h2>
+<p>Almost always reachability.</p>
+<p><strong>Localhost.</strong> Safaricom cannot reach <code>127.0.0.1</code>. You need a public HTTPS URL in <code>DARAJA_CALLBACK_PUBLIC_URL</code>.</p>
+<p><strong>Tunnel expired.</strong> Free ngrok URLs change on restart. Confirm the current URL matches the config with <code>server_health</code>.</p>
+<p><strong>Blocked by source verification.</strong> Check <code>server_health</code> for a non-zero <code>rejectedIp</code>. If your proxy strips <code>X-Forwarded-For</code>, the server sees the proxy's address rather than Safaricom's. For sandbox only, set <code>DARAJA_CALLBACK_ALLOW_ANY_IP=1</code>. Never in production.</p>
+<p><strong>Path secret mismatch.</strong> If you set <code>DARAJA_CALLBACK_PATH_SECRET</code> after registering C2B URLs, the registered URLs no longer match. Re-register.</p>
+<h2 id="the-initiator-information-is-invalid-2001">&quot;The initiator information is invalid&quot; (2001)<a class="anchor" href="#the-initiator-information-is-invalid-2001" aria-label="Link to this section">#</a></h2>
+<p>The initiator credentials, not the OAuth ones. Three separate things go wrong:</p>
+<p>The <strong>initiator name</strong> is the API operator username from the portal, not your account email. The <strong>security credential</strong> is the initiator password encrypted with Safaricom's certificate, and the sandbox and production certificates differ. And the credential expires when Safaricom rotates the certificate, which happens without announcement.</p>
+<p>Regenerate with <code>encryptSecurityCredential</code>. See <a href="/daraja-mcp/going-live/">Going live</a>.</p>
+<h2 id="timestamp-or-password-errors-on-stk-push">Timestamp or password errors on STK push<a class="anchor" href="#timestamp-or-password-errors-on-stk-push" aria-label="Link to this section">#</a></h2>
+<p>The timestamp must be East Africa Time, not UTC. A UTC timestamp is three hours behind and Daraja rejects the request as expired.</p>
+<p>This server handles it, but if you are comparing against your own code, that is usually the difference.</p>
+<p>The <code>Password</code> field is <code>base64(shortcode + passkey + timestamp)</code> and the timestamp inside it must be byte-identical to the one in the <code>Timestamp</code> field. Deriving them separately fails intermittently when a request straddles a second boundary.</p>
+<h2 id="insufficient-funds-in-sandbox">&quot;Insufficient funds&quot; in sandbox<a class="anchor" href="#insufficient-funds-in-sandbox" aria-label="Link to this section">#</a></h2>
+<p>Sandbox shortcodes are shared and the B2C float gets drained by other people testing. Try a smaller amount, or wait.</p>
+<p>Note that amount <code>1</code> triggers the insufficient-funds scenario deliberately in simulator mode.</p>
+<h2 id="ratiba-rejects-a-standing-order">Ratiba rejects a standing order<a class="anchor" href="#ratiba-rejects-a-standing-order" aria-label="Link to this section">#</a></h2>
+<p><strong>Duplicate name.</strong> Names must be unique per customer. This is the most common rejection.</p>
+<p><strong>Not enabled.</strong> Ratiba is commercial. Without a signed agreement it is not available on your shortcode in production, and the app must have the product selected in sandbox.</p>
+<p><strong>Date format.</strong> <code>yyyymmdd</code>. This server also accepts <code>yyyy-mm-dd</code> and converts. End date must not precede start date.</p>
+<h2 id="payments-succeed-but-my-system-does-not-know">Payments succeed but my system does not know<a class="anchor" href="#payments-succeed-but-my-system-does-not-know" aria-label="Link to this section">#</a></h2>
+<p>Usually the two code spaces.</p>
+<p>A synchronous <code>ResponseCode</code> of <code>0</code> means the request was accepted for processing. It does not mean money moved. The callback's <code>ResultCode</code> of <code>0</code> means it did. Treating the first as payment confirmation marks unpaid orders as paid.</p>
+<p>Ratiba compounds this: <code>200</code> for sync success, <code>0</code> for callback success, different envelope casing between the two.</p>
+<p>Use the <code>*_and_wait</code> tools, which return the settled outcome, or reconcile against <code>list_callbacks</code>.</p>
+<h2 id="the-server-will-not-start">The server will not start<a class="anchor" href="#the-server-will-not-start" aria-label="Link to this section">#</a></h2>
+<p><strong>Port in use.</strong> Change <code>DARAJA_CALLBACK_PORT</code>, default <code>8787</code>.</p>
+<p><strong>Sockets forbidden.</strong> Some sandboxed hosts do not allow listening. Set <code>DARAJA_DISABLE_RECEIVER=1</code>. You lose the <code>*_and_wait</code> tools and must supply your own callback URLs.</p>
+<p><strong>Refuses to start in production.</strong> By design, if <code>DARAJA_CALLBACK_ALLOW_ANY_IP</code> is set. Unset it.</p>
+<h2 id="still-stuck">Still stuck<a class="anchor" href="#still-stuck" aria-label="Link to this section">#</a></h2>
+<p>Run with the callback receiver's health endpoint open:</p>
+<figure class="code"><figcaption><span class="code-lang">bash</span><button class="copy" type="button" data-copy>Copy</button></figcaption><pre><code>curl http://localhost:8787/health</code></pre></figure>
+<p>That reports counts of received, rejected, and malformed callbacks, which usually says whether the problem is reachability or verification.</p>
+<p>Then open an issue with the output of <code>server_health</code> and the mode you are in. Do not paste credentials, receipt numbers, or customer phone numbers.</p>
+<nav class="next-prev next-prev-single"><a class="prev" href="/daraja-mcp/going-live/"><span>Previous</span><strong>Going live</strong></a></nav>
+  </main>
+
+  <aside class="toc" aria-label="On this page"><p>On this page</p><ul><li class="lvl-2"><a href="#invalid-access-token-404-001-03">&quot;Invalid Access Token&quot; (404.001.03)</a></li><li class="lvl-2"><a href="#stk-push-accepted-but-nothing-happens-on-the-phone">STK push accepted but nothing happens on the phone</a></li><li class="lvl-2"><a href="#stk-push-works-but-the-callback-never-arrives">STK push works but the callback never arrives</a></li><li class="lvl-2"><a href="#the-initiator-information-is-invalid-2001">&quot;The initiator information is invalid&quot; (2001)</a></li><li class="lvl-2"><a href="#timestamp-or-password-errors-on-stk-push">Timestamp or password errors on STK push</a></li><li class="lvl-2"><a href="#insufficient-funds-in-sandbox">&quot;Insufficient funds&quot; in sandbox</a></li><li class="lvl-2"><a href="#ratiba-rejects-a-standing-order">Ratiba rejects a standing order</a></li><li class="lvl-2"><a href="#payments-succeed-but-my-system-does-not-know">Payments succeed but my system does not know</a></li><li class="lvl-2"><a href="#the-server-will-not-start">The server will not start</a></li><li class="lvl-2"><a href="#still-stuck">Still stuck</a></li></ul></aside>
+</div>
+
+<footer class="site-footer">
+  <p>MIT licensed. Built from the public Daraja documentation by <a href="https://parseen.dev">David Parseen</a>.</p>
+  <p>Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their trademarks.</p>
+</footer>
+
+<script src="/daraja-mcp/docs.js" defer></script>
+</body>
+</html>
