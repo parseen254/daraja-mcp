@@ -31,7 +31,7 @@
     "node": ">=20"
   },
   "bin": {
-    "daraja-mcp": "./dist/cli.js"
+    "daraja-mcp": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

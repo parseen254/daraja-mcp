@@ -8,3 +8,4 @@ coverage/
 .DS_Store
 .daraja-callbacks/
 .daraja-specs/
+*.tgz
