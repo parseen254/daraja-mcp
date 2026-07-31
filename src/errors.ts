@@ -120,6 +120,32 @@ export function describeResultCode(code: string | number | undefined): {
   return RESULT_CODES[String(code)] ?? null;
 }
 
+/**
+ * Does this body carry an error envelope, whatever casing Daraja chose?
+ *
+ * Exported so the success path in the client tests the same shapes that
+ * normaliseError knows how to read. When the two lists drifted apart, a 200
+ * carrying `ErrorCode` was returned to the caller as a successful payment.
+ */
+export function hasErrorEnvelope(body: unknown): boolean {
+  if (body === null || typeof body !== 'object') return false;
+  const b = body as Record<string, unknown>;
+
+  return (
+    b.errorCode !== undefined ||
+    b.ErrorCode !== undefined ||
+    b.errorMessage !== undefined ||
+    b.ErrorMessage !== undefined
+  );
+}
+
+/** The response code, under whichever spelling this product uses. */
+export function responseCodeOf(body: unknown): unknown {
+  if (body === null || typeof body !== 'object') return undefined;
+  const b = body as Record<string, unknown>;
+  return b.ResponseCode ?? b.responseCode;
+}
+
 /** Map an HTTP status to a kind when the body gives us nothing better. */
 function kindFromStatus(status: number): DarajaErrorKind {
   if (status === 401 || status === 403) return 'auth';

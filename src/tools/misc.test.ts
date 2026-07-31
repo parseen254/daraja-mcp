@@ -169,7 +169,10 @@ describe('identity and fraud tools', () => {
     expect(body.msisdn).toBe('254712345678');
     expect(body.idNumber).toBe('12345678');
     // The spec requires all of these; omitting them gets the request rejected.
-    expect(body.requestRefID).toMatch(/^[0-9a-f-]{36}$/);
+    // Pin the real layout: [0-9a-f-]{36} also matches 36 dashes.
+    expect(body.requestRefID).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
     expect(body.shortCode).toBe('174379');
     expect(body.idType).toBe('01');
     // The capitalised spelling is not what the API accepts.
