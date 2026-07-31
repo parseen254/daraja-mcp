@@ -3,6 +3,12 @@ import { DarajaError } from '../errors.js';
 import { normaliseMsisdn } from '../crypto.js';
 import { callbackUrl, requireConfig, type ToolContext } from './context.js';
 import type { CallbackKind } from '../callbacks/store.js';
+import {
+  containsUntrustedText,
+  sanitisePayload,
+  sanitiseUntrusted,
+  UNTRUSTED_NOTICE,
+} from '../callbacks/untrusted.js';
 
 /**
  * C2B, the identity and security cluster, pull transactions, and the tools for
@@ -286,17 +292,23 @@ export function listCallbacks(
 
   // Return a summary rather than full payloads; a listing of twenty raw
   // callbacks is mostly noise in a model's context.
+  const callbacks = records.map((r) => ({
+    seq: r.seq,
+    receivedAt: r.receivedAt,
+    kind: r.kind,
+    correlationId: r.correlationId,
+    outcome: r.outcome,
+    resultCode: r.resultCode,
+    // ResultDesc is echoed from the payload, so it can carry customer text.
+    resultDesc: r.resultDesc === null ? null : sanitiseUntrusted(r.resultDesc),
+  }));
+
   return {
-    count: records.length,
-    callbacks: records.map((r) => ({
-      seq: r.seq,
-      receivedAt: r.receivedAt,
-      kind: r.kind,
-      correlationId: r.correlationId,
-      outcome: r.outcome,
-      resultCode: r.resultCode,
-      resultDesc: r.resultDesc,
-    })),
+    count: callbacks.length,
+    callbacks,
+    ...(records.some((r) => containsUntrustedText(r.payload))
+      ? { untrustedContent: UNTRUSTED_NOTICE }
+      : {}),
   };
 }
 
@@ -323,7 +335,17 @@ export function getCallback(ctx: ToolContext, args: { correlationId: string }) {
     };
   }
 
-  return { found: true, ...record };
+  // The payload contains fields the paying customer wrote. Sanitise on the way
+  // out and say where the text came from; the stored copy keeps the original
+  // bytes for reconciliation.
+  const untrusted = containsUntrustedText(record.payload);
+
+  return {
+    found: true,
+    ...record,
+    payload: sanitisePayload(record.payload),
+    ...(untrusted ? { untrustedContent: UNTRUSTED_NOTICE } : {}),
+  };
 }
 
 export function serverHealth(ctx: ToolContext) {

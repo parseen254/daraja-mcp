@@ -23,6 +23,67 @@ interface Waiter {
   /** Resolves with null when the wait times out or the receiver shuts down. */
   resolve: (record: CallbackRecord | null) => void;
   timer: NodeJS.Timeout;
+  /** What the caller asked for, checked against what arrives. */
+  expect?: WaitExpectation;
+}
+
+/**
+ * Facts about the request a callback must agree with before it settles a wait.
+ *
+ * The correlation id is read out of the callback body, so on its own it only
+ * proves the sender knew the id. Checking the amount as well means a callback
+ * cannot report a different sum against a payment we initiated.
+ */
+export interface WaitExpectation {
+  /** Amount in KES that was requested. */
+  amount?: number;
+}
+
+/** Pull the settled amount out of whichever envelope this callback uses. */
+function amountOf(payload: unknown): number | null {
+  const p = payload as Record<string, any>;
+
+  const items = p?.Body?.stkCallback?.CallbackMetadata?.Item;
+  if (Array.isArray(items)) {
+    const found = items.find((i) => i?.Name === 'Amount');
+    if (found?.Value !== undefined) return Number(found.Value);
+  }
+
+  const params = p?.Result?.ResultParameters?.ResultParameter;
+  if (Array.isArray(params)) {
+    const found = params.find((x) => x?.Key === 'TransactionAmount' || x?.Key === 'Amount');
+    if (found?.Value !== undefined) return Number(found.Value);
+  }
+
+  const data = p?.responseBody?.responseData ?? p?.ResponseBody?.ResponseData;
+  if (Array.isArray(data)) {
+    const found = data.find((d) => (d?.name ?? d?.Name) === 'amount');
+    const value = found?.value ?? found?.Value;
+    if (value !== undefined) return Number(value);
+  }
+
+  if (p?.TransAmount !== undefined) return Number(p.TransAmount);
+
+  return null;
+}
+
+/**
+ * Does this callback plausibly belong to the request that is waiting?
+ *
+ * Only rejects on a positive contradiction. A callback that reports no amount,
+ * which is normal on failure, still settles the wait: the caller needs to hear
+ * that the payment failed.
+ */
+export function matchesExpectation(
+  payload: unknown,
+  expect: WaitExpectation | undefined,
+): boolean {
+  if (!expect?.amount) return true;
+
+  const actual = amountOf(payload);
+  if (actual === null || Number.isNaN(actual)) return true;
+
+  return actual === expect.amount;
 }
 
 export interface ReceiverOptions {
@@ -51,7 +112,14 @@ export class CallbackReceiver {
   private readonly onLog: (message: string) => void;
 
   /** Counters surfaced by the health tool, useful when debugging a silent integration. */
-  readonly stats = { received: 0, rejectedIp: 0, rejectedPath: 0, malformed: 0 };
+  readonly stats = {
+    received: 0,
+    rejectedIp: 0,
+    rejectedPath: 0,
+    malformed: 0,
+    /** Callbacks that arrived for a waiting request but contradicted it. */
+    mismatched: 0,
+  };
 
   constructor(opts: ReceiverOptions) {
     this.config = opts.config;
@@ -124,7 +192,11 @@ export class CallbackReceiver {
    * sometimes delivers the callback before the synchronous response finishes
    * being parsed.
    */
-  waitFor(correlationId: string, timeoutMs: number): Promise<CallbackRecord | null> {
+  waitFor(
+    correlationId: string,
+    timeoutMs: number,
+    expect?: WaitExpectation,
+  ): Promise<CallbackRecord | null> {
     const existing = this.store.findByCorrelationId(correlationId);
     if (existing) return Promise.resolve(existing);
 
@@ -137,7 +209,7 @@ export class CallbackReceiver {
       // Do not hold the event loop open purely for a pending waiter.
       timer.unref?.();
 
-      const waiter: Waiter = { correlationId, resolve, timer };
+      const waiter: Waiter = { correlationId, resolve, timer, expect };
       const list = this.waiters.get(correlationId) ?? [];
       list.push(waiter);
       this.waiters.set(correlationId, list);
@@ -247,8 +319,26 @@ export class CallbackReceiver {
     if (record.correlationId) {
       const list = this.waiters.get(record.correlationId);
       if (list) {
-        this.waiters.delete(record.correlationId);
-        for (const w of list) {
+        // A callback only settles a wait if it agrees with what was asked for.
+        // The correlation id comes out of the body, so on its own it proves
+        // only that the sender knew the id.
+        const settling = list.filter((w) => matchesExpectation(payload, w.expect));
+        const mismatched = list.filter((w) => !settling.includes(w));
+
+        if (mismatched.length > 0) {
+          this.stats.mismatched += mismatched.length;
+          this.onLog(
+            `Callback ${record.correlationId} did not match ${mismatched.length} waiting request(s); not settling them`,
+          );
+        }
+
+        if (settling.length === list.length) {
+          this.waiters.delete(record.correlationId);
+        } else {
+          this.waiters.set(record.correlationId, mismatched);
+        }
+
+        for (const w of settling) {
           clearTimeout(w.timer);
           w.resolve(record);
         }

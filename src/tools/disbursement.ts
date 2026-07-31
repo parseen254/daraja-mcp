@@ -119,7 +119,9 @@ export async function b2cPaymentAndWait(
 
   // The result callback correlates on ConversationID, which Daraja assigns.
   const id = conversationId ?? sent.originatorConversationId;
-  const record = await ctx.receiver.waitFor(id, timeoutMs);
+  // Bind the wait to the amount requested, so a callback reporting a
+  // different sum cannot settle this payout.
+  const record = await ctx.receiver.waitFor(id, timeoutMs, { amount: args.amount });
 
   if (!record) {
     return {

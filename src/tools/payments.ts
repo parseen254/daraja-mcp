@@ -136,7 +136,9 @@ export async function stkPushAndWait(
     return { status: 'accepted_without_id', response: accepted };
   }
 
-  const record = await ctx.receiver.waitFor(id, timeoutMs);
+  // Bind the wait to the amount requested, so a callback reporting a
+  // different sum cannot settle this payment.
+  const record = await ctx.receiver.waitFor(id, timeoutMs, { amount: args.amount });
 
   if (!record) {
     return {
@@ -348,7 +350,9 @@ export async function ratibaCreateAndWait(
 
   const timeoutMs = (args.timeoutSeconds ?? 90) * 1000;
   const created = await ratibaCreate(ctx, args);
-  const record = await ctx.receiver.waitFor(created.correlationId, timeoutMs);
+  const record = await ctx.receiver.waitFor(created.correlationId, timeoutMs, {
+    amount: args.amount,
+  });
 
   if (!record) {
     return {
