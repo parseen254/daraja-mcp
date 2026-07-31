@@ -36,6 +36,23 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 /** Refresh slightly before true expiry to avoid a race on a long call. */
 const TOKEN_SKEW_MS = 60_000;
 
+/**
+ * Synchronous success codes, which are not consistent across Daraja products.
+ *
+ * Most send "0". Dynamic QR sends "00". Pull Transactions sends "1000". A
+ * client that only accepts "0" throws on a perfectly successful QR generation,
+ * so all three are treated as success.
+ *
+ * Note this is the *synchronous* code space only. Callbacks use ResultCode,
+ * where 0 means the money actually moved, and Ratiba's callback uses 0 while
+ * its synchronous response uses 200.
+ */
+const SUCCESS_RESPONSE_CODES = new Set(['0', '00', '1000']);
+
+function isSuccessResponseCode(code: unknown): boolean {
+  return SUCCESS_RESPONSE_CODES.has(String(code));
+}
+
 export class DarajaClient {
   private tokenCache: TokenCache | null = null;
 
@@ -129,9 +146,15 @@ export class DarajaClient {
     }
 
     const maxAttempts = opts.retryable ? 3 : 1;
-    let lastError: DarajaError | null = null;
+    // A stale token is not a failure of the request, so the re-authentication
+    // retry is tracked separately from the transient-error budget. Folding it
+    // into `attempt` would consume the only attempt a non-retryable call has.
+    let reauthUsed = false;
+    let attempt = 0;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    while (attempt < maxAttempts) {
+      attempt += 1;
+
       const res = await this.rawFetch(
         url,
         {
@@ -148,32 +171,38 @@ export class DarajaClient {
         // Daraja returns HTTP 200 with a non-zero ResponseCode for some
         // failures, so a 200 alone is not success.
         const rc = (parsed as Record<string, unknown> | null)?.ResponseCode;
-        if (rc !== undefined && String(rc) !== '0') {
+        if (rc !== undefined && !isSuccessResponseCode(rc)) {
           throw normaliseError(res.status, parsed);
         }
         return parsed as T;
       }
 
-      // A 401 usually means our cached token went stale early. Refresh once and
-      // retry immediately rather than counting it against the retry budget.
-      if (res.status === 401 && !opts.noAuth && attempt === 1) {
+      // A 401 usually means the cached token went stale early. Refresh and
+      // replay once, without spending an attempt.
+      if (res.status === 401 && !opts.noAuth && !reauthUsed) {
+        reauthUsed = true;
+        attempt -= 1;
         await this.getAccessToken(true);
         headers.Authorization = `Bearer ${this.tokenCache?.token ?? ''}`;
         continue;
       }
 
-      lastError = normaliseError(res.status, parsed);
+      const error = normaliseError(res.status, parsed);
 
-      const transient = lastError.kind === 'upstream' || lastError.kind === 'rate_limit';
-      if (!transient || attempt === maxAttempts) {
-        throw lastError;
+      const transient = error.kind === 'upstream' || error.kind === 'rate_limit';
+      if (!transient || attempt >= maxAttempts) {
+        throw error;
       }
 
-      // Exponential backoff: 500ms, 1000ms.
+      // Exponential backoff: 500ms, then 1000ms.
       await this.sleep(500 * 2 ** (attempt - 1));
     }
 
-    throw lastError ?? new DarajaError({ kind: 'unknown', message: 'Request failed' });
+    // Unreachable: every path above either returns or throws.
+    throw new DarajaError({
+      kind: 'unknown',
+      message: `Request to ${url} exhausted all attempts without a result`,
+    });
   }
 
   private async rawFetch(
