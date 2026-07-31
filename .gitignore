@@ -9,3 +9,4 @@ coverage/
 .daraja-callbacks/
 .daraja-specs/
 *.tgz
+coverage/

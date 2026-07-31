@@ -1,5 +1,12 @@
 # daraja-mcp
 
+[![npm](https://img.shields.io/npm/v/daraja-mcp?color=cb3837&logo=npm)](https://www.npmjs.com/package/daraja-mcp)
+[![downloads](https://img.shields.io/npm/dm/daraja-mcp?color=cb3837)](https://www.npmjs.com/package/daraja-mcp)
+[![coverage](https://parseen254.github.io/daraja-mcp/coverage.svg)](#development)
+[![tests](https://img.shields.io/badge/tests-368%20passing-4c1)](#development)
+[![node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 An MCP server for the Safaricom M-Pesa Daraja 3.0 API.
 
 Covers the full product surface including M-Pesa Ratiba, verifies the source of
@@ -221,14 +228,19 @@ import { DarajaClient, DarajaSimulator, loadConfig } from 'daraja-mcp';
 
 ```bash
 npm install
-npm test          # 79 tests, no credentials needed
+npm test              # 368 tests, no credentials needed
+npm run test:coverage # with a coverage report
 npm run build
-npm run verify    # typecheck, test, build, and an end-to-end MCP check
+npm run verify        # typecheck, test, build, and an end-to-end MCP check
 ```
 
-`npm run verify` is what CI would run. It drives the built CLI over stdio MCP
-through a full payment cycle, a cancellation, and a standing order, all against
-the simulator, so it needs no Safaricom credentials.
+`npm run verify` is the full gate. It drives the built CLI over stdio MCP
+through a payment, a cancellation, and a standing order against the simulator,
+so it needs no Safaricom credentials.
+
+Coverage sits at about 98% of lines, with thresholds enforced by the test run
+so a regression fails rather than passing quietly. The badge is generated
+locally with `npm run coverage:badge`, since this repository does not run CI.
 
 The docs site is served from the `gh-pages` branch. To update it, edit
 `site/index.html` on `main` and run `npm run docs:publish`.

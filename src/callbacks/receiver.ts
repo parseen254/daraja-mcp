@@ -182,7 +182,27 @@ export class CallbackReceiver {
       kindHint = segments[1] ?? 'unknown';
     }
 
-    const raw = await this.readBody(req);
+    let raw: string;
+    try {
+      raw = await this.readBody(req);
+    } catch {
+      // Oversized body. Reply and close rather than leaving the socket open:
+      // the client is still uploading, so without an explicit close the
+      // response is never flushed and the request hangs until it times out.
+      this.stats.malformed += 1;
+      this.onLog('Rejected an oversized callback body');
+
+      const payload = JSON.stringify({ ResultCode: 1, ResultDesc: 'Payload too large' });
+      res.writeHead(413, {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        Connection: 'close',
+      });
+      res.end(payload);
+      req.destroy();
+      return;
+    }
+
     let payload: unknown;
     try {
       payload = JSON.parse(raw);
