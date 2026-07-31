@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DarajaError } from '../errors.js';
 import { normaliseMsisdn } from '../crypto.js';
-import { callbackUrl, requireConfig, type ToolContext } from './context.js';
+import { callbackUrl, requireConfig, requirePayoutsAllowed, type ToolContext } from './context.js';
 
 /**
  * Money-out and business-to-business products.
@@ -75,6 +75,8 @@ export async function b2cPayment(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'b2c_payment');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
   const urls = asyncUrls(ctx, 'b2c', args.resultUrl);
@@ -102,6 +104,8 @@ export async function b2cPaymentAndWait(
   ctx: ToolContext,
   args: Parameters<typeof b2cPayment>[1] & { timeoutSeconds?: number },
 ) {
+  requirePayoutsAllowed(ctx, 'b2c_payment_and_wait');
+
   if (!ctx.receiver) {
     throw new DarajaError({
       kind: 'config',
@@ -185,6 +189,8 @@ export async function b2bPayment(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'b2b_payment');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 
@@ -234,6 +240,8 @@ export async function taxRemittance(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'tax_remittance');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 
@@ -271,6 +279,8 @@ export async function businessToPochi(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'business_to_pochi');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 
@@ -383,6 +393,8 @@ export async function reversal(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'reversal');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.receiverShortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 

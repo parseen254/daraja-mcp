@@ -85,7 +85,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Send an M-Pesa payment prompt (STK push) to a customer. Returns immediately with an ' +
       'acknowledgement; it does NOT confirm payment. Use stk_push_and_wait if you need the outcome.',
     payments.stkPushInput,
-    (args) => toolResult(() => payments.stkPush(ctx, args)),
+    (args) => toolResult(ctx, () => payments.stkPush(ctx, args)),
   );
 
   server.tool(
@@ -103,14 +103,14 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
         .default(90)
         .describe('How long to wait for the customer. Prompts expire after about 60 seconds.'),
     },
-    (args) => toolResult(() => payments.stkPushAndWait(ctx, args)),
+    (args) => toolResult(ctx, () => payments.stkPushAndWait(ctx, args)),
   );
 
   server.tool(
     'stk_query',
     'Query the status of a previous STK push using its CheckoutRequestID.',
     payments.stkQueryInput,
-    (args) => toolResult(() => payments.stkQuery(ctx, args)),
+    (args) => toolResult(ctx, () => payments.stkQuery(ctx, args)),
   );
 
   // --- M-Pesa Ratiba ------------------------------------------------------
@@ -121,7 +121,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
       'repayments, insurance premiums, SACCO contributions. The customer approves via an ' +
       'M-Pesa prompt. The standing order name must be unique per customer.',
     payments.ratibaCreateInput,
-    (args) => toolResult(() => payments.ratibaCreate(ctx, args)),
+    (args) => toolResult(ctx, () => payments.ratibaCreate(ctx, args)),
   );
 
   server.tool(
@@ -132,7 +132,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
       ...payments.ratibaCreateInput,
       timeoutSeconds: z.number().int().positive().max(300).default(90),
     },
-    (args) => toolResult(() => payments.ratibaCreateAndWait(ctx, args)),
+    (args) => toolResult(ctx, () => payments.ratibaCreateAndWait(ctx, args)),
   );
 
   // --- QR ------------------------------------------------------------------
@@ -141,7 +141,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'generate_qr',
     'Generate a dynamic M-Pesa QR code for a specific amount and till or paybill.',
     payments.qrInput,
-    (args) => toolResult(() => payments.generateQr(ctx, args)),
+    (args) => toolResult(ctx, () => payments.generateQr(ctx, args)),
   );
 
   // --- Disbursement --------------------------------------------------------
@@ -151,7 +151,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Pay money out to a customer: refunds, withdrawals, salaries, promotional winnings. ' +
       'Asynchronous; the result arrives on a callback.',
     disbursement.b2cInput,
-    (args) => toolResult(() => disbursement.b2cPayment(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.b2cPayment(ctx, args)),
   );
 
   server.tool(
@@ -162,28 +162,28 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
       ...disbursement.b2cInput,
       timeoutSeconds: z.number().int().positive().max(300).default(120),
     },
-    (args) => toolResult(() => disbursement.b2cPaymentAndWait(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.b2cPaymentAndWait(ctx, args)),
   );
 
   server.tool(
     'b2b_payment',
     'Pay another business: a PayBill, a Buy Goods till, or a B2C working account top-up.',
     disbursement.b2bInput,
-    (args) => toolResult(() => disbursement.b2bPayment(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.b2bPayment(ctx, args)),
   );
 
   server.tool(
     'tax_remittance',
     'Remit tax to the Kenya Revenue Authority using a Payment Registration Number.',
     disbursement.taxRemittanceInput,
-    (args) => toolResult(() => disbursement.taxRemittance(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.taxRemittance(ctx, args)),
   );
 
   server.tool(
     'business_to_pochi',
     'Pay a Pochi la Biashara number.',
     disbursement.pochiInput,
-    (args) => toolResult(() => disbursement.businessToPochi(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.businessToPochi(ctx, args)),
   );
 
   // --- Treasury ------------------------------------------------------------
@@ -193,7 +193,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Query the balance of your M-Pesa business account. Asynchronous; the balance arrives ' +
       'on a callback as a pipe-delimited string per account type.',
     disbursement.accountBalanceInput,
-    (args) => toolResult(() => disbursement.accountBalance(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.accountBalance(ctx, args)),
   );
 
   server.tool(
@@ -201,14 +201,14 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Check the status of any past transaction by receipt number, or by conversation id when ' +
       'the original request timed out. Use this before retrying a payment you are unsure about.',
     disbursement.transactionStatusInput,
-    (args) => toolResult(() => disbursement.transactionStatus(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.transactionStatus(ctx, args)),
   );
 
   server.tool(
     'reversal',
     'Reverse a transaction that was paid into your shortcode.',
     disbursement.reversalInput,
-    (args) => toolResult(() => disbursement.reversal(ctx, args)),
+    (args) => toolResult(ctx, () => disbursement.reversal(ctx, args)),
   );
 
   // --- C2B -----------------------------------------------------------------
@@ -218,14 +218,14 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Register the validation and confirmation URLs that Daraja calls when a customer pays ' +
       'your PayBill or till directly. Required once per shortcode before C2B notifications work.',
     misc.c2bRegisterInput,
-    (args) => toolResult(() => misc.c2bRegisterUrls(ctx, args)),
+    (args) => toolResult(ctx, () => misc.c2bRegisterUrls(ctx, args)),
   );
 
   server.tool(
     'c2b_simulate',
     'Simulate a customer paying your shortcode. Sandbox and simulator only.',
     misc.c2bSimulateInput,
-    (args) => toolResult(() => misc.c2bSimulate(ctx, args)),
+    (args) => toolResult(ctx, () => misc.c2bSimulate(ctx, args)),
   );
 
   // --- Pull transactions ---------------------------------------------------
@@ -235,7 +235,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Register a shortcode for the Pull Transactions API, which lets you fetch missed C2B ' +
       'transactions after an outage.',
     misc.pullRegisterInput,
-    (args) => toolResult(() => misc.pullRegister(ctx, args)),
+    (args) => toolResult(ctx, () => misc.pullRegister(ctx, args)),
   );
 
   server.tool(
@@ -243,7 +243,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Fetch C2B transactions for a time window. Useful for reconciliation when callbacks ' +
       'were missed.',
     misc.pullQueryInput,
-    (args) => toolResult(() => misc.pullQuery(ctx, args)),
+    (args) => toolResult(ctx, () => misc.pullQuery(ctx, args)),
   );
 
   // --- Identity and fraud controls ----------------------------------------
@@ -253,7 +253,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Return the date a number was last SIM-swapped. A recent swap is a strong fraud signal; ' +
       'check this before disbursing to an unfamiliar number.',
     misc.simSwapInput,
-    (args) => toolResult(() => misc.checkSimSwap(ctx, args)),
+    (args) => toolResult(ctx, () => misc.checkSimSwap(ctx, args)),
   );
 
   server.tool(
@@ -261,14 +261,14 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Return the date a number was first registered on the Safaricom network. Very new lines ' +
       'carry elevated fraud risk.',
     misc.ageOnNetworkInput,
-    (args) => toolResult(() => misc.checkAgeOnNetwork(ctx, args)),
+    (args) => toolResult(ctx, () => misc.checkAgeOnNetwork(ctx, args)),
   );
 
   server.tool(
     'validate_identity',
     'Check whether a phone number is registered against a given national ID number.',
     misc.validateIdentityInput,
-    (args) => toolResult(() => misc.validateIdentity(ctx, args)),
+    (args) => toolResult(ctx, () => misc.validateIdentity(ctx, args)),
   );
 
   server.tool(
@@ -276,7 +276,7 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Look up the registered name and tariff of a PayBill or till. Use this to confirm you ' +
       'are paying the business you intend to before sending money.',
     misc.orgInfoInput,
-    (args) => toolResult(() => misc.queryOrgInfo(ctx, args)),
+    (args) => toolResult(ctx, () => misc.queryOrgInfo(ctx, args)),
   );
 
   // --- Callback inspection -------------------------------------------------
@@ -285,14 +285,14 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'list_callbacks',
     'List callbacks this server has received, newest first.',
     misc.listCallbacksInput,
-    (args) => toolResult(async () => misc.listCallbacks(ctx, args)),
+    (args) => toolResult(ctx, async () => misc.listCallbacks(ctx, args)),
   );
 
   server.tool(
     'get_callback',
     'Fetch the full callback payload for a correlation id.',
     misc.getCallbackInput,
-    (args) => toolResult(async () => misc.getCallback(ctx, args)),
+    (args) => toolResult(ctx, async () => misc.getCallback(ctx, args)),
   );
 
   server.tool(
@@ -300,6 +300,6 @@ function registerTools(server: McpServer, ctx: ToolContext): void {
     'Report the current mode, which credentials are configured, and callback receiver status. ' +
       'Start here when something is not working.',
     {},
-    () => toolResult(async () => misc.serverHealth(ctx)),
+    () => toolResult(ctx, async () => misc.serverHealth(ctx)),
   );
 }

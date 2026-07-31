@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DarajaError } from '../errors.js';
 import { normaliseMsisdn, stkCredentials } from '../crypto.js';
-import { callbackUrl, requireConfig, type ToolContext } from './context.js';
+import { callbackUrl, requireConfig, requirePayoutsAllowed, type ToolContext } from './context.js';
 
 /** Shared input pieces, so validation messages stay consistent across tools. */
 const phone = z
@@ -277,6 +277,8 @@ export async function ratibaCreate(
     callbackUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'ratiba_create');
+
   const msisdn = msisdnOrThrow(args.phoneNumber);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
   checkFieldLengths(args.accountReference, args.transactionDesc);
@@ -335,6 +337,8 @@ export async function ratibaCreateAndWait(
   ctx: ToolContext,
   args: Parameters<typeof ratibaCreate>[1] & { timeoutSeconds?: number },
 ) {
+  requirePayoutsAllowed(ctx, 'ratiba_create_and_wait');
+
   if (!ctx.receiver) {
     throw new DarajaError({
       kind: 'config',

@@ -21,6 +21,18 @@ export interface DarajaConfig {
   /** Already-encrypted initiator password. See docs/security-credential.md. */
   securityCredential?: string;
   callback: CallbackConfig;
+  /**
+   * Whether tools that move money outward are permitted in production.
+   *
+   * Collecting a payment requires the customer to approve an M-Pesa prompt, so
+   * there is a human in the loop. Paying out, reversing someone else's
+   * transaction, and creating a standing order have no such check: an agent can
+   * do them alone, and a standing order keeps debiting after the session ends.
+   *
+   * These stay available in simulator and sandbox, where no real money exists.
+   * In production they require deliberate opt-in.
+   */
+  allowPayouts: boolean;
 }
 
 export interface CallbackConfig {
@@ -135,5 +147,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DarajaConfig {
       pathSecret: env.DARAJA_CALLBACK_PATH_SECRET,
       storeDir: env.DARAJA_CALLBACK_STORE_DIR ?? '.daraja-callbacks',
     },
+    // Outside production there is no real money to protect, so payouts are
+    // always available. In production they are off unless explicitly enabled.
+    allowPayouts: mode === 'production' ? envFlag(env, 'DARAJA_ALLOW_PAYOUTS') : true,
   };
 }
