@@ -65,8 +65,16 @@ export const SAFARICOM_CIDRS = [
   '196.201.212.69/32',
 ];
 
-function envFlag(name: string): boolean {
-  const v = process.env[name];
+/**
+ * Read a boolean flag from the supplied environment.
+ *
+ * Takes the env explicitly rather than reaching for process.env, so that a
+ * caller passing its own environment gets consistent behaviour. Reading the
+ * ambient process.env here would silently ignore a flag the caller set, and
+ * would let the production guard below be bypassed.
+ */
+function envFlag(env: NodeJS.ProcessEnv, name: string): boolean {
+  const v = env[name];
   return v === '1' || v === 'true' || v === 'yes';
 }
 
@@ -97,7 +105,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DarajaConfig {
 
   // In production, refusing to skip IP verification is the safe default. An open
   // callback endpoint that mutates payment state is a real vulnerability.
-  const skipIpCheck = envFlag('DARAJA_CALLBACK_ALLOW_ANY_IP');
+  const skipIpCheck = envFlag(env, 'DARAJA_CALLBACK_ALLOW_ANY_IP');
   if (skipIpCheck && mode === 'production') {
     throw new Error(
       'DARAJA_CALLBACK_ALLOW_ANY_IP cannot be set in production mode. ' +

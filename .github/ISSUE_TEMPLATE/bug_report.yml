@@ -1,0 +1,83 @@
+name: Bug report
+description: Something behaves differently from what the docs say
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, it is worth running `server_health` and checking
+        [troubleshooting.md](https://github.com/parseen254/daraja-mcp/blob/main/docs/troubleshooting.md),
+        which covers the errors people hit most often.
+
+        **Never paste credentials, real M-Pesa receipt numbers, or customer
+        phone numbers.** Use `254708374149` and `NLJ7RT61SV` as stand-ins.
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      description: Which environment were you running against?
+      options:
+        - simulator
+        - sandbox
+        - production
+    validations:
+      required: true
+
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      description: Which tool did you call?
+      placeholder: stk_push_and_wait
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Include the error text if there was one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: |
+        The arguments you passed, with anything sensitive replaced. If it
+        happens in simulator mode, that is the most useful case to report,
+        since anyone can reproduce it.
+      render: json
+
+  - type: textarea
+    id: health
+    attributes:
+      label: server_health output
+      description: |
+        Optional but usually the fastest way to see a configuration problem.
+        It does not include credential values.
+      render: json
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `npx daraja-mcp --version`
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: v20.11.0
