@@ -24,8 +24,17 @@ export {
   stkPassword,
 } from './crypto.js';
 
-export { CallbackReceiver } from './callbacks/receiver.js';
-export type { ReceiverOptions } from './callbacks/receiver.js';
+export { CallbackReceiver, matchesExpectation } from './callbacks/receiver.js';
+export type { ReceiverOptions, WaitExpectation } from './callbacks/receiver.js';
+
+export {
+  containsUntrustedText,
+  isUntrustedField,
+  MAX_UNTRUSTED_LENGTH,
+  sanitisePayload,
+  sanitiseUntrusted,
+  UNTRUSTED_NOTICE,
+} from './callbacks/untrusted.js';
 export { CallbackStore, correlationIdOf, kindOf, outcomeOf } from './callbacks/store.js';
 export type { CallbackKind, CallbackRecord } from './callbacks/store.js';
 export { ipInCidr, isAllowedSource, normaliseIp, resolveClientIp } from './callbacks/ip.js';

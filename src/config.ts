@@ -21,6 +21,18 @@ export interface DarajaConfig {
   /** Already-encrypted initiator password. See docs/security-credential.md. */
   securityCredential?: string;
   callback: CallbackConfig;
+  /**
+   * Whether tools that move money outward are permitted in production.
+   *
+   * Collecting a payment requires the customer to approve an M-Pesa prompt, so
+   * there is a human in the loop. Paying out, reversing someone else's
+   * transaction, and creating a standing order have no such check: an agent can
+   * do them alone, and a standing order keeps debiting after the session ends.
+   *
+   * These stay available in simulator and sandbox, where no real money exists.
+   * In production they require deliberate opt-in.
+   */
+  allowPayouts: boolean;
 }
 
 export interface CallbackConfig {
@@ -41,6 +53,14 @@ export interface CallbackConfig {
   pathSecret?: string;
   /** Directory for durable callback storage. Survives restarts. */
   storeDir: string;
+  /**
+   * Whether to believe X-Forwarded-For when deciding who sent a callback.
+   *
+   * Off unless explicitly enabled. Anyone can set the header, so trusting it
+   * without a proxy in front makes the CIDR allowlist decorative. Enable it
+   * only when a proxy you control terminates the connection.
+   */
+  trustProxy: boolean;
 }
 
 const SANDBOX_URL = 'https://sandbox.safaricom.co.ke';
@@ -113,11 +133,28 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DarajaConfig {
     );
   }
 
-  const allowedCidrs =
-    mode === 'simulator' || skipIpCheck
-      ? []
-      : (env.DARAJA_CALLBACK_CIDRS?.split(',').map((s) => s.trim()).filter(Boolean) ??
-        SAFARICOM_CIDRS);
+  let allowedCidrs: string[];
+  if (mode === 'simulator' || skipIpCheck) {
+    allowedCidrs = [];
+  } else if (env.DARAJA_CALLBACK_CIDRS === undefined) {
+    allowedCidrs = SAFARICOM_CIDRS;
+  } else {
+    const parsed = env.DARAJA_CALLBACK_CIDRS.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    // An empty or comma-only value used to parse to [], which the receiver
+    // reads as "accept every source". Setting the variable to nothing must not
+    // be a silent way to disable verification.
+    if (parsed.length === 0) {
+      throw new Error(
+        'DARAJA_CALLBACK_CIDRS is set but contains no usable ranges. ' +
+          'Unset it to use Safaricom\'s published ranges, or set ' +
+          'DARAJA_CALLBACK_ALLOW_ANY_IP=1 outside production to accept any source.',
+      );
+    }
+    allowedCidrs = parsed;
+  }
 
   return {
     mode,
@@ -134,6 +171,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): DarajaConfig {
       allowedCidrs,
       pathSecret: env.DARAJA_CALLBACK_PATH_SECRET,
       storeDir: env.DARAJA_CALLBACK_STORE_DIR ?? '.daraja-callbacks',
+      trustProxy: envFlag(env, 'DARAJA_TRUST_PROXY'),
     },
+    // Outside production there is no real money to protect, so payouts are
+    // always available. In production they are off unless explicitly enabled.
+    allowPayouts: mode === 'production' ? envFlag(env, 'DARAJA_ALLOW_PAYOUTS') : true,
   };
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DarajaError } from '../errors.js';
 import { normaliseMsisdn, stkCredentials } from '../crypto.js';
-import { callbackUrl, requireConfig, type ToolContext } from './context.js';
+import { callbackUrl, requireConfig, requirePayoutsAllowed, type ToolContext } from './context.js';
 
 /** Shared input pieces, so validation messages stay consistent across tools. */
 const phone = z
@@ -136,7 +136,9 @@ export async function stkPushAndWait(
     return { status: 'accepted_without_id', response: accepted };
   }
 
-  const record = await ctx.receiver.waitFor(id, timeoutMs);
+  // Bind the wait to the amount requested, so a callback reporting a
+  // different sum cannot settle this payment.
+  const record = await ctx.receiver.waitFor(id, timeoutMs, { amount: args.amount });
 
   if (!record) {
     return {
@@ -277,6 +279,8 @@ export async function ratibaCreate(
     callbackUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'ratiba_create');
+
   const msisdn = msisdnOrThrow(args.phoneNumber);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
   checkFieldLengths(args.accountReference, args.transactionDesc);
@@ -335,6 +339,8 @@ export async function ratibaCreateAndWait(
   ctx: ToolContext,
   args: Parameters<typeof ratibaCreate>[1] & { timeoutSeconds?: number },
 ) {
+  requirePayoutsAllowed(ctx, 'ratiba_create_and_wait');
+
   if (!ctx.receiver) {
     throw new DarajaError({
       kind: 'config',
@@ -344,7 +350,9 @@ export async function ratibaCreateAndWait(
 
   const timeoutMs = (args.timeoutSeconds ?? 90) * 1000;
   const created = await ratibaCreate(ctx, args);
-  const record = await ctx.receiver.waitFor(created.correlationId, timeoutMs);
+  const record = await ctx.receiver.waitFor(created.correlationId, timeoutMs, {
+    amount: args.amount,
+  });
 
   if (!record) {
     return {

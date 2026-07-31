@@ -139,25 +139,65 @@ describe('pull transactions', () => {
 });
 
 describe('identity and fraud tools', () => {
-  it('checks a SIM swap by normalised msisdn', async () => {
+  it('checks a SIM swap using the customerNumber field', async () => {
     const h = makeHarness();
     await checkSimSwap(h.ctx, { phoneNumber: '0712345678' });
-    expect(h.lastBody().msisdn).toBe('254712345678');
+    const body = h.lastBody();
+
+    // The identity APIs take "customerNumber". Sending "msisdn", which is what
+    // the payment products use, is silently wrong.
+    expect(body.customerNumber).toBe('254712345678');
+    expect(body.msisdn).toBeUndefined();
     expect(h.requests.at(-1)?.url).toContain('/imsi/v2/checkATI');
   });
 
-  it('checks age on network', async () => {
+  it('checks age on network using the customerNumber field', async () => {
     const h = makeHarness();
     await checkAgeOnNetwork(h.ctx, { phoneNumber: '0712345678' });
+    const body = h.lastBody();
+
+    expect(body.customerNumber).toBe('254712345678');
+    expect(body.msisdn).toBeUndefined();
     expect(h.requests.at(-1)?.url).toContain('/registration/lookup/v1/checkATI');
   });
 
-  it('validates a number against an ID', async () => {
+  it('validates a number against an ID with every required field', async () => {
     const h = makeHarness();
     await validateIdentity(h.ctx, { phoneNumber: '0712345678', idNumber: '12345678' });
     const body = h.lastBody();
+
     expect(body.msisdn).toBe('254712345678');
-    expect(body.IDNumber).toBe('12345678');
+    expect(body.idNumber).toBe('12345678');
+    // The spec requires all of these; omitting them gets the request rejected.
+    expect(body.requestRefID).toMatch(/^[0-9a-f-]{36}$/);
+    expect(body.shortCode).toBe('174379');
+    expect(body.idType).toBe('01');
+    // The capitalised spelling is not what the API accepts.
+    expect(body.IDNumber).toBeUndefined();
+  });
+
+  it.each([
+    ['national', '01'],
+    ['military', '02'],
+    ['passport', '05'],
+  ] as const)('maps idType %s to code %s', async (idType, code) => {
+    const h = makeHarness();
+    await validateIdentity(h.ctx, {
+      phoneNumber: '0712345678',
+      idNumber: '1',
+      idType,
+    });
+    expect(h.lastBody().idType).toBe(code);
+  });
+
+  it('generates a fresh requestRefID per call', async () => {
+    const h = makeHarness();
+    await validateIdentity(h.ctx, { phoneNumber: '0712345678', idNumber: '1' });
+    const first = h.lastBody().requestRefID;
+    await validateIdentity(h.ctx, { phoneNumber: '0712345678', idNumber: '1' });
+
+    // The spec calls for a unique string per request.
+    expect(h.lastBody().requestRefID).not.toBe(first);
   });
 
   it('looks up organisation info with the paybill identifier by default', async () => {

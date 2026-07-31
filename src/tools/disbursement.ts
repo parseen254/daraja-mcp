@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DarajaError } from '../errors.js';
 import { normaliseMsisdn } from '../crypto.js';
-import { callbackUrl, requireConfig, type ToolContext } from './context.js';
+import { callbackUrl, requireConfig, requirePayoutsAllowed, type ToolContext } from './context.js';
 
 /**
  * Money-out and business-to-business products.
@@ -75,6 +75,8 @@ export async function b2cPayment(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'b2c_payment');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
   const urls = asyncUrls(ctx, 'b2c', args.resultUrl);
@@ -102,6 +104,8 @@ export async function b2cPaymentAndWait(
   ctx: ToolContext,
   args: Parameters<typeof b2cPayment>[1] & { timeoutSeconds?: number },
 ) {
+  requirePayoutsAllowed(ctx, 'b2c_payment_and_wait');
+
   if (!ctx.receiver) {
     throw new DarajaError({
       kind: 'config',
@@ -115,7 +119,9 @@ export async function b2cPaymentAndWait(
 
   // The result callback correlates on ConversationID, which Daraja assigns.
   const id = conversationId ?? sent.originatorConversationId;
-  const record = await ctx.receiver.waitFor(id, timeoutMs);
+  // Bind the wait to the amount requested, so a callback reporting a
+  // different sum cannot settle this payout.
+  const record = await ctx.receiver.waitFor(id, timeoutMs, { amount: args.amount });
 
   if (!record) {
     return {
@@ -185,6 +191,8 @@ export async function b2bPayment(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'b2b_payment');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 
@@ -234,6 +242,8 @@ export async function taxRemittance(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'tax_remittance');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 
@@ -271,13 +281,17 @@ export async function businessToPochi(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'business_to_pochi');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.shortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 
   return ctx.client.post('/mpesa/b2pochi/v1/paymentrequest', {
     InitiatorName: initiator,
     SecurityCredential: credential,
-    CommandID: 'BusinessPayment',
+    // Pochi la Biashara has its own command. BusinessPayment targets a
+    // registered customer's regular M-Pesa account, not their business wallet.
+    CommandID: 'BusinessPayToPochi',
     Amount: String(args.amount),
     PartyA: shortCode,
     PartyB: msisdnOrThrow(args.phoneNumber),
@@ -383,6 +397,8 @@ export async function reversal(
     resultUrl?: string;
   },
 ) {
+  requirePayoutsAllowed(ctx, 'reversal');
+
   const { initiator, credential } = initiatorCreds(ctx);
   const shortCode = args.receiverShortCode ?? requireConfig(ctx, 'shortCode', 'DARAJA_SHORTCODE');
 

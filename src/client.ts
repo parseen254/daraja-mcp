@@ -55,6 +55,14 @@ function isSuccessResponseCode(code: unknown): boolean {
 
 export class DarajaClient {
   private tokenCache: TokenCache | null = null;
+  /**
+   * The in-flight token request, shared by concurrent callers.
+   *
+   * Without this, ten parallel tool calls on a cold cache each hit the token
+   * endpoint. Daraja rate limits it, so a burst of concurrent work is a good
+   * way to get temporarily locked out of authenticating at all.
+   */
+  private tokenInFlight: Promise<string> | null = null;
 
   constructor(
     private readonly config: DarajaConfig,
@@ -79,6 +87,19 @@ export class DarajaClient {
       return this.tokenCache.token;
     }
 
+    // Join an existing request rather than starting a competing one.
+    if (!forceRefresh && this.tokenInFlight) {
+      return this.tokenInFlight;
+    }
+
+    const request = this.fetchToken().finally(() => {
+      this.tokenInFlight = null;
+    });
+    this.tokenInFlight = request;
+    return request;
+  }
+
+  private async fetchToken(): Promise<string> {
     const basic = Buffer.from(
       `${this.config.consumerKey}:${this.config.consumerSecret}`,
     ).toString('base64');
@@ -168,12 +189,31 @@ export class DarajaClient {
       const parsed = await this.parseBody(res);
 
       if (res.ok) {
+        const body = parsed as Record<string, unknown> | null;
+
         // Daraja returns HTTP 200 with a non-zero ResponseCode for some
         // failures, so a 200 alone is not success.
-        const rc = (parsed as Record<string, unknown> | null)?.ResponseCode;
+        const rc = body?.ResponseCode;
         if (rc !== undefined && !isSuccessResponseCode(rc)) {
           throw normaliseError(res.status, parsed);
         }
+
+        // It also returns 200 with an errorCode envelope, and sometimes an
+        // HTML gateway page that parseBody wraps as { raw }. Returning either
+        // as success tells the caller a payment was accepted when it was not.
+        if (body?.errorCode !== undefined || body?.errorMessage !== undefined) {
+          throw normaliseError(res.status, parsed);
+        }
+        if (body?.raw !== undefined && Object.keys(body).length === 1) {
+          throw new DarajaError({
+            kind: 'upstream',
+            message: 'Daraja returned a non-JSON body with a 200 status',
+            httpStatus: res.status,
+            raw: parsed,
+            hint: 'Usually a gateway error page. Treat the request as unresolved and query its status rather than resending.',
+          });
+        }
+
         return parsed as T;
       }
 
