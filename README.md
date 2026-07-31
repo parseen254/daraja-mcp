@@ -245,6 +245,26 @@ locally with `npm run coverage:badge`, since this repository does not run CI.
 The docs site is served from the `gh-pages` branch. To update it, edit
 `site/index.html` on `main` and run `npm run docs:publish`.
 
+## Contributing
+
+Bug reports and pull requests are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to get set up and what makes a
+change likely to be merged.
+
+The most useful thing you can report is a **Daraja discrepancy**: a case where
+the real API behaves differently from what this server assumes. Those are the
+ones the simulator cannot catch on its own. There is an issue template for it.
+
+Everything here derives from Safaricom's public documentation. Please do not
+contribute code or payloads taken from an employer's or client's private
+integration.
+
+## Security
+
+Callbacks are unsigned, so a forged one that gets accepted is a real
+vulnerability. Report privately rather than in a public issue: see
+[SECURITY.md](SECURITY.md).
+
 ## Disclaimer
 
 Not affiliated with or endorsed by Safaricom PLC. M-PESA and Daraja are their

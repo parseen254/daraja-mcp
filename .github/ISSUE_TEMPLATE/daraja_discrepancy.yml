@@ -1,0 +1,70 @@
+name: Daraja discrepancy
+description: The API behaves differently from what this server assumes
+labels: [daraja-discrepancy]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when real Daraja does something this server does not expect:
+        a field name that changed, a success code that is not recognised, a
+        callback shape that differs from the documentation.
+
+        These are the most valuable reports here, because they are the ones
+        the simulator cannot catch on its own.
+
+        **Redact everything identifying.** Replace MSISDNs with
+        `254708374149`, receipts with `NLJ7RT61SV`, and shortcodes with
+        `174379`.
+
+  - type: input
+    id: product
+    attributes:
+      label: Daraja product
+      placeholder: M-Pesa Ratiba
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where did you see this?
+      options:
+        - sandbox
+        - production
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What this server sends or expects
+      render: json
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What Daraja actually returned
+      description: The real payload, redacted.
+      render: json
+    validations:
+      required: true
+
+  - type: input
+    id: docs
+    attributes:
+      label: Documentation page
+      description: |
+        Link to the Daraja page for this product, if it covers the behaviour.
+        If the docs disagree with the live API, say which one you are
+        reporting.
+      placeholder: https://developer.safaricom.co.ke/apis/MpesaRatiba
+
+  - type: checkboxes
+    id: provenance
+    attributes:
+      label: Provenance
+      options:
+        - label: >
+            This comes from my own testing or the public documentation, not
+            from an employer's or client's private integration.
+          required: true

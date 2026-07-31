@@ -1,0 +1,19 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/parseen254/daraja-mcp/security/advisories/new
+    about: >
+      Report privately, especially anything that would let a forged callback be
+      accepted. Please do not open a public issue for these.
+
+  - name: Troubleshooting guide
+    url: https://github.com/parseen254/daraja-mcp/blob/main/docs/troubleshooting.md
+    about: >
+      Covers the errors people hit most often: invalid access token, callbacks
+      that never arrive, invalid initiator information.
+
+  - name: Safaricom API support
+    url: https://developer.safaricom.co.ke
+    about: >
+      For questions about Daraja itself, shortcode provisioning, or going live,
+      Safaricom is the right place. This project is not affiliated with them.

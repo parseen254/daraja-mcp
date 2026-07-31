@@ -1,0 +1,45 @@
+name: Feature request
+description: A Daraja product to support, or a capability to add
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of request is this?
+      options:
+        - A Daraja product that is not yet covered
+        - A change to an existing tool
+        - Something about the simulator
+        - Something about callbacks
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: |
+        The task, not the solution. Knowing what you are actually building
+        usually changes what the right answer is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+
+  - type: input
+    id: docs
+    attributes:
+      label: Daraja documentation
+      description: If this is about a specific product, link its page.
+      placeholder: https://developer.safaricom.co.ke/apis/BillManager
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: What are you doing instead right now?
+      description: Helps judge how much this matters.
