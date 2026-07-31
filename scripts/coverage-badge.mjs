@@ -42,11 +42,47 @@ function colourFor(value) {
 const label = 'coverage';
 const value = `${rounded}%`;
 
-// Approximate Verdana advance width at 11px, which is what shields.io uses.
-const width = (text) => text.length * 6.5 + 10;
-const labelWidth = Math.round(width(label));
-const valueWidth = Math.round(width(value));
+/**
+ * Approximate the rendered width of a string in 11px Verdana.
+ *
+ * Shields.io measures glyphs properly; this table is close enough that the
+ * badge sits beside real shields.io badges without looking wrong. Getting it
+ * roughly right matters because the text is drawn with an explicit
+ * textLength, so a bad estimate stretches or squashes the glyphs rather than
+ * simply overflowing.
+ */
+function textWidth(text) {
+  let width = 0;
+  for (const ch of text) {
+    if (/[A-Z]/.test(ch)) width += 8.2;
+    else if (/[0-9]/.test(ch)) width += 7.0;
+    else if (/[il1jt.,:'|]/.test(ch)) width += 3.4;
+    else if (/[mw%]/.test(ch)) width += 10.5;
+    else if (/[a-z]/.test(ch)) width += 6.6;
+    else width += 6.5;
+  }
+  return width;
+}
+
+// Shields.io pads each side of the text by 5px, so a section is the text
+// width plus 10. Round to whole pixels to keep the rects crisp.
+const PADDING = 10;
+const labelTextWidth = Math.round(textWidth(label) * 10) / 10;
+const valueTextWidth = Math.round(textWidth(value) * 10) / 10;
+const labelWidth = Math.round(labelTextWidth + PADDING);
+const valueWidth = Math.round(valueTextWidth + PADDING);
 const total = labelWidth + valueWidth;
+
+// Everything inside the text group is drawn at 10x and scaled down, which is
+// how shields.io gets sub-pixel positioning. Centres are in that 10x space.
+const labelCentre = Math.round(labelWidth * 5);
+const valueCentre = Math.round((labelWidth + valueWidth / 2) * 10);
+
+// textLength is the natural text width, NOT the section width. Passing the
+// section width here stretches the glyphs to touch both edges, which is what
+// made an earlier version of this badge look cramped.
+const labelTextLength = Math.round(labelTextWidth * 10);
+const valueTextLength = Math.round(valueTextWidth * 10);
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${total}" height="20" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
@@ -61,10 +97,10 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.
     <rect width="${total}" height="20" fill="url(#s)"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="110" text-rendering="geometricPrecision">
-    <text x="${labelWidth * 5}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${(labelWidth - 10) * 10}">${label}</text>
-    <text x="${labelWidth * 5}" y="140" transform="scale(.1)" textLength="${(labelWidth - 10) * 10}">${label}</text>
-    <text x="${(labelWidth + valueWidth / 2) * 10}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${(valueWidth - 10) * 10}">${value}</text>
-    <text x="${(labelWidth + valueWidth / 2) * 10}" y="140" transform="scale(.1)" textLength="${(valueWidth - 10) * 10}">${value}</text>
+    <text aria-hidden="true" x="${labelCentre}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${labelTextLength}">${label}</text>
+    <text x="${labelCentre}" y="140" transform="scale(.1)" textLength="${labelTextLength}">${label}</text>
+    <text aria-hidden="true" x="${valueCentre}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${valueTextLength}">${value}</text>
+    <text x="${valueCentre}" y="140" transform="scale(.1)" textLength="${valueTextLength}">${value}</text>
   </g>
 </svg>
 `;

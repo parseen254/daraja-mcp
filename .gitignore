@@ -10,3 +10,4 @@ coverage/
 .daraja-specs/
 *.tgz
 coverage/
+.playwright-mcp/
