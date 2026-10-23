@@ -9,8 +9,8 @@
 
 An MCP server for the Safaricom M-Pesa Daraja 3.0 API.
 
-Covers the full product surface including M-Pesa Ratiba, verifies the source of
-inbound callbacks, and ships a simulator so you can run every tool without a
+Covers all 26 Daraja products, M-Pesa Ratiba included, checks where
+inbound callbacks come from, and ships a simulator so you can run every tool without a
 Safaricom account.
 
 ```bash
@@ -25,7 +25,7 @@ before you decide whether this is worth your time.
 ## Why another one
 
 There are several M-Pesa MCP servers already. Most wrap `POST /stkpush` and
-stop. The three things that make Daraja genuinely hard to work with are:
+stop. The three things that make Daraja hard to work with are:
 
 **The result does not come back in the response.** You initiate a payment, get
 an acknowledgement, and the actual outcome arrives on a webhook up to a minute
